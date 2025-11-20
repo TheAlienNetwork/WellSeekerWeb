@@ -376,15 +376,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             if (refreshResponse.ok) {
               const authResponse: WellSeekerAuthResponse = await refreshResponse.json();
-              token = authResponse.access_token;
-              req.session.wellSeekerToken = authResponse.access_token;
+              const newToken = authResponse.access_token;
+              req.session.wellSeekerToken = newToken;
               console.log("Token refreshed successfully, retrying wells request...");
+              console.log(`New token starts with: ${newToken.substring(0, 20)}...`);
 
               // Retry with new token
-              response = await makeWellsRequest(token);
+              response = await makeWellsRequest(newToken);
               
               if (response.ok) {
                 console.log("Wells request succeeded with refreshed token");
+              } else {
+                console.error(`Wells request still failed after token refresh: ${response.status}`);
               }
             } else {
               const refreshError = await refreshResponse.text();
