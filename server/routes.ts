@@ -163,6 +163,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ email: req.session.userEmail });
   });
 
+  // Well Dashboard Data endpoint
+  app.get("/api/dashboard/well-data", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const wellData = await storage.getWellDashboardData();
+      res.json(wellData);
+    } catch (error) {
+      console.error("Error fetching well dashboard data:", error);
+      res.status(500).json({ error: "Failed to fetch well dashboard data" });
+    }
+  });
+
   // Well Seeker Pro API endpoints
   app.get("/api/wells", async (req, res) => {
     try {
