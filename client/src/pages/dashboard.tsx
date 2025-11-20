@@ -52,7 +52,13 @@ export default function Dashboard() {
   // Fetch BHA runs for this well
   const { data: bhaRuns, isLoading: runsLoading } = useQuery<BHARun[]>({
     queryKey: ["/api/bha-runs", wellId],
-    enabled: !!wellId,
+    queryFn: async () => {
+      if (!wellId || wellId.trim() === "") throw new Error("Invalid well ID");
+      const response = await fetch(`/api/bha-runs/${wellId}`, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch BHA runs");
+      return response.json();
+    },
+    enabled: !!wellId && wellId.trim() !== "",
   });
 
   // Set initial run ID when runs are loaded
@@ -67,7 +73,15 @@ export default function Dashboard() {
   // Fetch well dashboard data
   const { data: wellData, isLoading, error } = useQuery<WellDashboardData>({
     queryKey: ["/api/dashboard/well-data", wellId, selectedRunId],
-    enabled: !!wellId && !!selectedRunId,
+    queryFn: async () => {
+      if (!wellId || wellId.trim() === "" || !selectedRunId || selectedRunId.trim() === "") {
+        throw new Error("Invalid well ID or run ID");
+      }
+      const response = await fetch(`/api/dashboard/well-data?wellId=${wellId}&runId=${selectedRunId}`, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch dashboard data");
+      return response.json();
+    },
+    enabled: !!wellId && wellId.trim() !== "" && !!selectedRunId && selectedRunId.trim() !== "",
   });
 
   // Save overrides mutation

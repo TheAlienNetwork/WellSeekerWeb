@@ -37,12 +37,19 @@ export default function ReportsPage() {
   // Fetch BHA runs for selected well
   const { data: bhaRuns } = useQuery<BHARun[]>({
     queryKey: ["/api/bha-runs", selectedWellId],
-    enabled: !!selectedWellId,
+    queryFn: async () => {
+      if (!selectedWellId || selectedWellId.trim() === "") throw new Error("Invalid well ID");
+      const response = await fetch(`/api/bha-runs/${selectedWellId}`, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch BHA runs");
+      return response.json();
+    },
+    enabled: !!selectedWellId && selectedWellId.trim() !== "",
   });
 
   // Generate Excel file for a component
   const generateExcel = async (componentType: string) => {
-    if (!selectedWellId || !selectedRunId) {
+    // Validate IDs are non-empty strings
+    if (!selectedWellId || selectedWellId.trim() === "" || !selectedRunId || selectedRunId.trim() === "") {
       toast({
         variant: "destructive",
         title: "Error",
@@ -54,7 +61,7 @@ export default function ReportsPage() {
     try {
       // Fetch component report data
       const response = await fetch(
-        `/api/reports/component/${componentType}?wellId=${selectedWellId}&runId=${selectedRunId}`,
+        `/api/component-report/${selectedWellId}/${selectedRunId}/${componentType}`,
         { credentials: "include" }
       );
 
