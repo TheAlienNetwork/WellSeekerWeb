@@ -51,14 +51,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Helper function to make authenticated API calls to Well Seeker Pro
   async function callWellSeekerAPI<T>(req: any, endpoint: string): Promise<T> {
     const token = await getWellSeekerToken(req);
+    const apiUrl = `https://www.icpwebportal.com/api/${endpoint}`;
 
-    const response = await fetch(`https://www.icpwebportal.com/api/${endpoint}`, {
+    console.log(`Calling Well Seeker API: ${apiUrl}`);
+
+    const response = await fetch(apiUrl, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     });
+
+    console.log(`API Response Status: ${response.status} ${response.statusText}`);
 
     if (response.status === 401) {
       // Token expired, try to refresh using refresh token
@@ -99,10 +104,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     if (!response.ok) {
-      throw new Error(`Well Seeker Pro API error: ${response.statusText}`);
+      const errorBody = await response.text();
+      console.error(`API Error Response Body: ${errorBody}`);
+      throw new Error(`Well Seeker Pro API error: ${response.statusText} - ${errorBody}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log(`API Response Data:`, JSON.stringify(data).substring(0, 200) + '...');
+    return data;
   }
 
   // Authentication endpoints
@@ -160,7 +169,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const wellsData = await callWellSeekerAPI<any[]>(req, "jobList");
+      // Try different possible endpoints for job list
+      let wellsData;
+      try {
+        wellsData = await callWellSeekerAPI<any[]>(req, "jobList");
+      } catch (error) {
+        console.log("jobList endpoint failed, trying jobs...");
+        try {
+          wellsData = await callWellSeekerAPI<any[]>(req, "jobs");
+        } catch (error2) {
+          console.log("jobs endpoint failed, trying JobList...");
+          wellsData = await callWellSeekerAPI<any[]>(req, "JobList");
+        }
+      }
       
       // Transform Well Seeker Pro API response to our Well format
       const wells: Well[] = wellsData.map((well, index) => ({
