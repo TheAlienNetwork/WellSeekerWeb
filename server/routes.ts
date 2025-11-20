@@ -624,25 +624,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const bhaData = await bhaResponse.json();
+      console.log('BHA Data for tool components:', JSON.stringify(bhaData).substring(0, 500));
 
       // Extract tool component information from BHA data
+      // The API might return an array or object, handle both cases
+      const bhaInfo = Array.isArray(bhaData) ? bhaData[0] : bhaData;
+
       const components: ToolComponent[] = [
-        { name: 'Svy Offset', sn: bhaData.svyOffset || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Gam Offset', sn: bhaData.gamOffset || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Stickup', sn: bhaData.stickup || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Retrievable', sn: bhaData.retrievable || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Pin To Set Screw (WSX fix)', sn: bhaData.pinToSetScrew || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Probe Order', sn: bhaData.probeOrder || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'MWD Make', sn: bhaData.mwdMake || '', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'MWD Model', sn: bhaData.mwdModel || '', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'UBHO SN', sn: bhaData.ubhoSN || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Helix SN', sn: bhaData.helixSN || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Helix Type', sn: bhaData.helixType || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Pulser SN', sn: bhaData.pulserSN || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Gamma SN', sn: bhaData.gammaSN || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Directional SN', sn: bhaData.directionalSN || '', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Battery SN', sn: bhaData.batterySN || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-        { name: 'Shock Tool SN', sn: bhaData.shockToolSN || '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Svy Offset', sn: String(bhaInfo?.svyOffset || bhaInfo?.SvyOffset || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Gam Offset', sn: String(bhaInfo?.gamOffset || bhaInfo?.GamOffset || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Stickup', sn: String(bhaInfo?.stickup || bhaInfo?.Stickup || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Retrievable', sn: String(bhaInfo?.retrievable || bhaInfo?.Retrievable || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Pin To Set Screw (WSX fix)', sn: String(bhaInfo?.pinToSetScrew || bhaInfo?.PinToSetScrew || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Probe Order', sn: String(bhaInfo?.probeOrder || bhaInfo?.ProbeOrder || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Itemized BHA', sn: 'See BHA tab', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'MWD Make', sn: bhaInfo?.mwdMake || bhaInfo?.MwdMake || '', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'MWD Model', sn: bhaInfo?.mwdModel || bhaInfo?.MwdModel || '', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'UBHO SN', sn: String(bhaInfo?.ubhoSN || bhaInfo?.UbhoSN || bhaInfo?.ubhoSn || '65207'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Helix SN', sn: String(bhaInfo?.helixSN || bhaInfo?.HelixSN || bhaInfo?.helixSn || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Helix Type', sn: String(bhaInfo?.helixType || bhaInfo?.HelixType || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Pulser SN', sn: String(bhaInfo?.pulserSN || bhaInfo?.PulserSN || bhaInfo?.pulserSn || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Gamma SN', sn: String(bhaInfo?.gammaSN || bhaInfo?.GammaSN || bhaInfo?.gammaSn || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Directional SN', sn: bhaInfo?.directionalSN || bhaInfo?.DirectionalSN || bhaInfo?.directionalSn || '', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Battery SN', sn: String(bhaInfo?.batterySN || bhaInfo?.BatterySN || bhaInfo?.batterySn || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Battery SN', sn: String(bhaInfo?.batterySN2 || bhaInfo?.BatterySN2 || bhaInfo?.batterySn2 || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
+        { name: 'Shock Tool SN', sn: String(bhaInfo?.shockToolSN || bhaInfo?.ShockToolSN || bhaInfo?.shockToolSn || '0'), snOverride: '', lih: '', failure: 'None', npt: '0.00' },
       ];
 
       res.json(components);
