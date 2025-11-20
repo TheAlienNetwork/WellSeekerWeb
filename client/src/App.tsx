@@ -17,7 +17,7 @@ import type { Well } from "@/components/WellListTable";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
-function App() {
+function AppContent() {
   const [user, setUser] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -183,6 +183,17 @@ function App() {
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AppContent />
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 
