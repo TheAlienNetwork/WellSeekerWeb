@@ -51,7 +51,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Helper function to make authenticated API calls to Well Seeker Pro
   async function callWellSeekerAPI<T>(req: any, endpoint: string): Promise<T> {
     const token = await getWellSeekerToken(req);
-    const apiUrl = `https://www.icpwebportal.com/api/${endpoint}`;
+    const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
+    
+    // Add productKey query parameter
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const apiUrl = `https://www.icpwebportal.com/api/${endpoint}${separator}productKey=${productKey}`;
 
     console.log(`Calling Well Seeker API: ${apiUrl}`);
 
