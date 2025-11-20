@@ -1,76 +1,83 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import WellDetailsHeader, { type WellDetails } from "@/components/WellDetailsHeader";
-import BHADataTable, { type BHAComponent } from "@/components/BHADataTable";
-import DrillingParametersPanel, { type DrillingParameters } from "@/components/DrillingParametersPanel";
-import ToolComponentsPanel, { type ToolComponent } from "@/components/ToolComponentsPanel";
+import WellDetailsHeader from "@/components/WellDetailsHeader";
+import BHADataTable from "@/components/BHADataTable";
+import DrillingParametersPanel from "@/components/DrillingParametersPanel";
+import ToolComponentsPanel from "@/components/ToolComponentsPanel";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
-//todo: remove mock functionality
-const mockWellDetails: WellDetails = {
-  wellName: 'Limousin 6-3H2',
-  jobNumber: 'ddmt-140146',
-  operator: 'Continental Resources',
-  rig: 'Nabors 784',
-  latitude: '48.76',
-  longitude: '-102.572189',
-  depthIn: '8,477',
-  depthOut: '8,477',
-  totalFootage: '6,590',
-  magCorrection: '7.580',
-  gridConv: '-1.542',
-  btotal: '56508.3',
-  vs: '267.480',
-  dec: '7.58',
-  dip: '73.10'
-};
+interface WellDetailsPageProps {
+  selectedWellId?: string;
+}
 
-const mockBHAComponents: BHAComponent[] = [
-  { num: 1, bha: 0, description: '8 3/4 Security FXGSD', nm: 'N', id: '0.00', od: '8.75', length: '1.00', toBit: '1.00' },
-  { num: 2, bha: 0, description: '6 3/4 7/8 5 7stg fxd @ 1.83°', nm: 'N', id: '0.00', od: '7.00', length: '25.40', toBit: '27.40' },
-  { num: 3, bha: 0, description: 'UBHO', nm: 'Y', id: '3.13', od: '6.38', length: '3.47', toBit: '30.87' },
-  { num: 4, bha: 0, description: 'NMDC', nm: 'Y', id: '2.88', od: '6.00', length: '29.46', toBit: '60.33' },
-  { num: 5, bha: 0, description: 'NMDC', nm: 'Y', id: '2.81', od: '5.88', length: '28.53', toBit: '88.86' },
-  { num: 6, bha: 0, description: 'X/O', nm: 'N', id: '2.88', od: '6.50', length: '3.26', toBit: '92.12' },
-  { num: 7, bha: 0, description: '±5 HWDP', nm: 'N', id: '2.50', od: '6.50', length: '1375.24', toBit: '1467.36' },
-];
-
-const mockDrillingParameters: DrillingParameters = {
-  plugIn: '1/0/00 0:00',
-  timeIn: '1/0/00 0:00',
-  timeOut: '3/30/14 17:45',
-  unplug: '1/0/00 0:00',
-  depthIn: '8,477',
-  depthOut: '8,477',
-  totalFootage: '6,590',
-  drillHours: '75.25',
-  operHours: '100149.75',
-  circHrs: '0.00',
-  pluggedHrs: '0.00',
-  bha: 1,
-  mwd: 0,
-  retrievable: 0,
-  reasonPOOH: 'Change BHA'
-};
-
-const mockToolComponents: ToolComponent[] = [
-  { name: 'UBHO', sn: '65207', snOverride: '', lih: 'Depth In: 1,887', failure: 'None', npt: '0.00' },
-  { name: 'MuleShoe', sn: 'NA', snOverride: '', lih: 'Depth Out: 8,477', failure: 'None', npt: '0.00' },
-  { name: 'Helix', sn: '0', snOverride: '', lih: 'Total: 6,590', failure: 'None', npt: '0.00' },
-  { name: 'Pulser', sn: '0', snOverride: '', lih: '(Circ Hrs: 2.83)', failure: 'None', npt: '0.00' },
-  { name: 'Gamma', sn: '0', snOverride: '', lih: 'Drill Hrs: 72.42', failure: 'None', npt: '0.00' },
-  { name: 'SEA', sn: '0', snOverride: '', lih: 'Total: 22.00', failure: 'None', npt: '0.00' },
-  { name: 'Battery', sn: '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-];
-
-export default function WellDetailsPage() {
+export default function WellDetailsPage({ selectedWellId }: WellDetailsPageProps) {
   const [selectedBHA, setSelectedBHA] = useState(1);
+  const { toast } = useToast();
 
-  const handleRefresh = () => {
-    console.log('Refreshing well data from API...');
-    //todo: remove mock functionality - implement API refresh
+  const { data: wellDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ["/api/wells", selectedWellId],
+    queryFn: () => api.wells.get(selectedWellId!),
+    enabled: !!selectedWellId,
+  });
+
+  const { data: bhaComponents, isLoading: isLoadingBHA } = useQuery({
+    queryKey: ["/api/wells", selectedWellId, "bha", selectedBHA],
+    queryFn: () => api.wells.getBHA(selectedWellId!, selectedBHA),
+    enabled: !!selectedWellId,
+  });
+
+  const { data: drillingParameters, isLoading: isLoadingDrilling } = useQuery({
+    queryKey: ["/api/wells", selectedWellId, "drilling-parameters"],
+    queryFn: () => api.wells.getDrillingParameters(selectedWellId!),
+    enabled: !!selectedWellId,
+  });
+
+  const { data: toolComponents, isLoading: isLoadingTools } = useQuery({
+    queryKey: ["/api/wells", selectedWellId, "tool-components"],
+    queryFn: () => api.wells.getToolComponents(selectedWellId!),
+    enabled: !!selectedWellId,
+  });
+
+  const handleRefresh = async () => {
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["/api/wells", selectedWellId] });
+      toast({
+        title: "Data refreshed",
+        description: "Well data has been updated",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Refresh failed",
+        description: "Failed to refresh well data",
+      });
+    }
   };
+
+  if (!selectedWellId) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-semibold">Well Details</h1>
+        <p className="text-muted-foreground">Please select a well from the Wells page</p>
+      </div>
+    );
+  }
+
+  if (isLoadingDetails) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-semibold">Well Details</h1>
+        <div className="flex items-center justify-center p-12">
+          <div className="text-muted-foreground">Loading well details...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -85,7 +92,7 @@ export default function WellDetailsPage() {
         </Button>
       </div>
 
-      <WellDetailsHeader details={mockWellDetails} />
+      {wellDetails && <WellDetailsHeader details={wellDetails} />}
 
       <Tabs defaultValue="bha" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -94,18 +101,36 @@ export default function WellDetailsPage() {
           <TabsTrigger value="tools" data-testid="tab-tools">Tool Components</TabsTrigger>
         </TabsList>
         <TabsContent value="bha" className="space-y-4">
-          <BHADataTable
-            components={mockBHAComponents}
-            selectedBHA={selectedBHA}
-            availableBHAs={[1, 2, 3, 4]}
-            onSelectBHA={setSelectedBHA}
-          />
+          {isLoadingBHA ? (
+            <div className="flex items-center justify-center p-12">
+              <div className="text-muted-foreground">Loading BHA components...</div>
+            </div>
+          ) : bhaComponents ? (
+            <BHADataTable
+              components={bhaComponents}
+              selectedBHA={selectedBHA}
+              availableBHAs={[1, 2, 3, 4]}
+              onSelectBHA={setSelectedBHA}
+            />
+          ) : null}
         </TabsContent>
         <TabsContent value="drilling" className="space-y-4">
-          <DrillingParametersPanel parameters={mockDrillingParameters} />
+          {isLoadingDrilling ? (
+            <div className="flex items-center justify-center p-12">
+              <div className="text-muted-foreground">Loading drilling parameters...</div>
+            </div>
+          ) : drillingParameters ? (
+            <DrillingParametersPanel parameters={drillingParameters} />
+          ) : null}
         </TabsContent>
         <TabsContent value="tools" className="space-y-4">
-          <ToolComponentsPanel components={mockToolComponents} />
+          {isLoadingTools ? (
+            <div className="flex items-center justify-center p-12">
+              <div className="text-muted-foreground">Loading tool components...</div>
+            </div>
+          ) : toolComponents ? (
+            <ToolComponentsPanel components={toolComponents} />
+          ) : null}
         </TabsContent>
       </Tabs>
     </div>

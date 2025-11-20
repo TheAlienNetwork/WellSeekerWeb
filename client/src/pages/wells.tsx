@@ -1,21 +1,11 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import WellListTable, { type Well } from "@/components/WellListTable";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-//todo: remove mock functionality
-const mockWells: Well[] = [
-  { id: '1', jobNum: 'ddmt-140146', actualWell: 'Limousin 6-3H2', rig: 'Nabors 784', operator: 'Continental Resources', wellStatus: 'EOW Sent' },
-  { id: '2', jobNum: 'TEST-55555', actualWell: 'Test Well 5', rig: 'Test Rig 123', operator: 'Test Operator', wellStatus: 'N/A' },
-  { id: '3', jobNum: 'TEST-44444', actualWell: 'Test Well 4', rig: 'Test Rig 123', operator: 'Test Operator', wellStatus: 'N/A' },
-  { id: '4', jobNum: 'TEST-33333', actualWell: 'Test Well 3', rig: 'Test Rig 123', operator: 'Test Operator', wellStatus: 'N/A' },
-  { id: '5', jobNum: 'TEST-22222', actualWell: 'Test Well 2', rig: 'Test Rig 123', operator: 'Test Operator', wellStatus: 'N/A' },
-  { id: '6', jobNum: 'TEST-11111', actualWell: 'Test Well', rig: 'Test Rig 123', operator: 'Test Operator', wellStatus: 'N/A' },
-  { id: '7', jobNum: 'POCO-Prueba', actualWell: 'Ahora Valles - Wellbore 1', rig: 'MSES', operator: 'Addison Resources', wellStatus: 'N/A' },
-  { id: '8', jobNum: 'MSPA-85479', actualWell: 'Circle H 105HC - Wellbore 1', rig: 'Patterson 572', operator: 'Chesapeake Appalachia, L.L.C.', wellStatus: 'EOW Sent' },
-  { id: '9', jobNum: 'MSPA-85477', actualWell: 'Circle H 104HC - Wellbore 1', rig: 'Patterson 572', operator: 'Chesapeake Appalachia, L.L.C.', wellStatus: 'EOW Sent' },
-  { id: '10', jobNum: 'MSPA-85476', actualWell: 'Circle H 6H - Wellbore 1', rig: 'Patterson 572', operator: 'Chesapeake Appalachia, L.L.C.', wellStatus: 'EOW Sent' },
-];
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 interface WellsPageProps {
   onSelectWell: (well: Well) => void;
@@ -23,17 +13,55 @@ interface WellsPageProps {
 
 export default function WellsPage({ onSelectWell }: WellsPageProps) {
   const [selectedWellId, setSelectedWellId] = useState<string>();
-  const [wells] = useState<Well[]>(mockWells); //todo: remove mock functionality - fetch from API
+  const { toast } = useToast();
+
+  const { data: wells, isLoading, error } = useQuery({
+    queryKey: ["/api/wells"],
+    queryFn: () => api.wells.list(),
+  });
 
   const handleSelectWell = (well: Well) => {
     setSelectedWellId(well.id);
     onSelectWell(well);
   };
 
-  const handleRefresh = () => {
-    console.log('Refreshing wells from API...');
-    //todo: remove mock functionality - implement API refresh
+  const handleRefresh = async () => {
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["/api/wells"] });
+      toast({
+        title: "Wells refreshed",
+        description: "Well list has been updated",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Refresh failed",
+        description: "Failed to refresh wells",
+      });
+    }
   };
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-semibold">Wells</h1>
+        <div className="p-4 border border-destructive rounded-md">
+          <p className="text-destructive">Failed to load wells: {error instanceof Error ? error.message : "Unknown error"}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-semibold">Wells</h1>
+        <div className="flex items-center justify-center p-12">
+          <div className="text-muted-foreground">Loading wells...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -48,7 +76,7 @@ export default function WellsPage({ onSelectWell }: WellsPageProps) {
         </Button>
       </div>
       <WellListTable
-        wells={wells}
+        wells={wells || []}
         onSelectWell={handleSelectWell}
         selectedWellId={selectedWellId}
       />

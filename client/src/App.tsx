@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -12,30 +12,53 @@ import WellsPage from "@/pages/wells";
 import WellDetailsPage from "@/pages/well-details";
 import NotFound from "@/pages/not-found";
 import type { Well } from "@/components/WellListTable";
+import { api } from "@/lib/api";
 
 function Router() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [, setLocation] = useLocation();
   const [currentPage, setCurrentPage] = useState("wells");
+  const [selectedWellId, setSelectedWellId] = useState<string>();
 
-  const handleLogin = (email: string, password: string) => {
-    console.log('Login attempt:', email);
-    //todo: remove mock functionality - implement real authentication with Well Seeker Pro API
+  // Check if user is already authenticated on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await api.auth.me();
+        setUserEmail(user.email);
+        setIsAuthenticated(true);
+      } catch (error) {
+        setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleLogin = (email: string) => {
     setUserEmail(email);
     setIsAuthenticated(true);
     setLocation("/wells");
   };
 
-  const handleLogout = () => {
-    console.log('Logout');
-    setIsAuthenticated(false);
-    setUserEmail("");
-    setLocation("/");
+  const handleLogout = async () => {
+    try {
+      await api.auth.logout();
+      setIsAuthenticated(false);
+      setUserEmail("");
+      setSelectedWellId(undefined);
+      setLocation("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const handleSelectWell = (well: Well) => {
-    console.log('Selected well:', well);
+    setSelectedWellId(well.id);
     setCurrentPage("details");
     setLocation("/well-details");
   };
@@ -46,6 +69,14 @@ function Router() {
     else if (page === "details") setLocation("/well-details");
     else setLocation(`/${page}`);
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <LoginPage onLogin={handleLogin} />;
@@ -76,7 +107,7 @@ function Router() {
                 <WellsPage onSelectWell={handleSelectWell} />
               </Route>
               <Route path="/well-details">
-                <WellDetailsPage />
+                <WellDetailsPage selectedWellId={selectedWellId} />
               </Route>
               <Route path="/reports">
                 <div className="space-y-4">
