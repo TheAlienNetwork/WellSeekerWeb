@@ -115,10 +115,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication endpoints
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { email, password, productKey } = req.body;
+      const { email, password } = req.body;
 
-      if (!email || !password || !productKey) {
-        return res.status(400).json({ error: "Email, password, and product key are required" });
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password are required" });
+      }
+
+      // Get product key from environment
+      const productKey = process.env.WELLSEEKER_PRODUCT_KEY;
+      if (!productKey) {
+        console.error("WELLSEEKER_PRODUCT_KEY not configured");
+        return res.status(500).json({ error: "Server configuration error. Please contact support." });
       }
 
       // Store credentials in session
