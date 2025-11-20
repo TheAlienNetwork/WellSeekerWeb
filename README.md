@@ -56,14 +56,32 @@ The application will be available at `http://localhost:5000`
 
 The application authenticates with the Well Seeker Pro API and caches access tokens for efficient API usage. All API calls include automatic token refresh on expiration.
 
-### Current Status
+### API Endpoints Used
 
-The application is currently using representative mock data while the specific Well Seeker Pro API endpoints are being configured. The authentication flow is fully functional and validates credentials against the Well Seeker Pro API.
+The application connects to these Well Seeker Pro API endpoints:
+- `POST /api/authToken` - Authentication
+- `GET /api/wellList` - List of wells
+- `GET /api/wellDetails/{wellId}` - Well details
+- `GET /api/wells/{wellId}/bha/{bhaNumber}` - BHA components
+- `GET /api/wells/{wellId}/bhaRuns` - Available BHA runs
+- `GET /api/wells/{wellId}/drillingParameters` - Drilling parameters
+- `GET /api/wells/{wellId}/toolComponents` - Tool components
 
-To enable live data from Well Seeker Pro:
-1. Add your credentials to environment variables
-2. Configure the specific API endpoints in `server/routes.ts` (see TODO comments)
-3. Update the data mapping based on your Well Seeker Pro API responses
+### Configuration
+
+1. Add your credentials to Replit Secrets:
+   - `WELLSEEKER_PRODUCT_KEY` - Your Well Seeker Pro product key
+
+2. Users log in with their Well Seeker Pro username and password
+
+### Deployment
+
+To deploy the application:
+1. Ensure all secrets are configured
+2. Click the "Deploy" button in Replit
+3. The application will be published and accessible via the deployment URL
+
+The deployment uses the production build with optimized assets and server-side rendering.
 
 ## Usage
 

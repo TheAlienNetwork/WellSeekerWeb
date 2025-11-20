@@ -3,18 +3,49 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginFormProps {
-  onLogin: (email: string, password: string) => void;
+  onLogin: (email: string) => void;
 }
 
 export default function LoginForm({ onLogin }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(email, password);
+
+    if (!email || !password) {
+      toast({
+        title: "Missing credentials",
+        description: "Please enter both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const result = await api.auth.login(email, password);
+      onLogin(result.email);
+      toast({
+        title: "Login successful",
+        description: "Welcome to Well Seeker Pro",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid Well Seeker Pro credentials. Please check your username and password.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -36,6 +67,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 data-testid="input-email"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -47,10 +79,11 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 data-testid="input-password"
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full" data-testid="button-login">
-              Sign In
+            <Button type="submit" className="w-full" data-testid="button-login" disabled={isLoading}>
+              {isLoading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
         </CardContent>

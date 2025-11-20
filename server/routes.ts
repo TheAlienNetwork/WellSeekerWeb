@@ -182,16 +182,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      // Note: The actual Well Seeker Pro API endpoint for wells list is not documented
-      // Using mock data until the correct endpoint is configured
-      // TODO: Update with actual Well Seeker Pro API endpoint once available
-      const wells: Well[] = [
-        { id: '1', jobNum: 'ddmt-140146', actualWell: 'Limousin 6-3H2', rig: 'Nabors 784', operator: 'Continental Resources', wellStatus: 'EOW Sent' },
-        { id: '2', jobNum: 'TEST-55555', actualWell: 'Test Well 5', rig: 'Test Rig 123', operator: 'Test Operator', wellStatus: 'N/A' },
-        { id: '3', jobNum: 'TEST-44444', actualWell: 'Test Well 4', rig: 'Test Rig 123', operator: 'Test Operator', wellStatus: 'N/A' },
-        { id: '4', jobNum: 'POCO-Prueba', actualWell: 'Ahora Valles - Wellbore 1', rig: 'MSES', operator: 'Addison Resources', wellStatus: 'N/A' },
-        { id: '5', jobNum: 'MSPA-85479', actualWell: 'Circle H 105HC - Wellbore 1', rig: 'Patterson 572', operator: 'Chesapeake Appalachia, L.L.C.', wellStatus: 'EOW Sent' },
-      ];
+      const wellsData = await callWellSeekerAPI<any[]>(req, "wellList");
+      
+      // Transform Well Seeker Pro API response to our Well format
+      const wells: Well[] = wellsData.map((well, index) => ({
+        id: well.jobNumber || String(index + 1),
+        jobNum: well.jobNumber || '',
+        actualWell: well.actualWell || well.wellName || '',
+        rig: well.rig || '',
+        operator: well.operator || '',
+        wellStatus: well.wellStatus || 'N/A',
+      }));
 
       res.json(wells);
     } catch (error) {
@@ -208,23 +209,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId } = req.params;
 
-      // TODO: Update with actual Well Seeker Pro API endpoint once available
+      const wellData = await callWellSeekerAPI<any>(req, `wellDetails/${wellId}`);
+      
+      // Transform Well Seeker Pro API response to our WellDetails format
       const wellDetails: WellDetails = {
-        wellName: 'Limousin 6-3H2',
-        jobNumber: 'ddmt-140146',
-        operator: 'Continental Resources',
-        rig: 'Nabors 784',
-        latitude: '48.76',
-        longitude: '-102.572189',
-        depthIn: '8,477',
-        depthOut: '8,477',
-        totalFootage: '6,590',
-        magCorrection: '7.580',
-        gridConv: '-1.542',
-        btotal: '56508.3',
-        vs: '267.480',
-        dec: '7.58',
-        dip: '73.10'
+        wellName: wellData.wellName || wellData.actualWell || '',
+        jobNumber: wellData.jobNumber || wellId,
+        operator: wellData.operator || '',
+        rig: wellData.rig || '',
+        latitude: wellData.latitude || wellData.lat || '',
+        longitude: wellData.longitude || wellData.lon || '',
+        depthIn: wellData.depthIn || '',
+        depthOut: wellData.depthOut || '',
+        totalFootage: wellData.totalFootage || '',
+        magCorrection: wellData.magCorrection || wellData.magCorr || '',
+        gridConv: wellData.gridConv || wellData.gridConvergence || '',
+        btotal: wellData.btotal || wellData.bTotal || '',
+        vs: wellData.vs || '',
+        dec: wellData.dec || wellData.declination || '',
+        dip: wellData.dip || ''
       };
 
       res.json(wellDetails);
@@ -242,16 +245,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId, bhaNumber } = req.params;
 
-      // TODO: Update with actual Well Seeker Pro API endpoint once available
-      const bhaComponents: BHAComponent[] = [
-        { num: 1, bha: 0, description: '8 3/4 Security FXGSD', nm: 'N', id: '0.00', od: '8.75', length: '1.00', toBit: '1.00' },
-        { num: 2, bha: 0, description: '6 3/4 7/8 5 7stg fxd @ 1.83°', nm: 'N', id: '0.00', od: '7.00', length: '25.40', toBit: '27.40' },
-        { num: 3, bha: 0, description: 'UBHO', nm: 'Y', id: '3.13', od: '6.38', length: '3.47', toBit: '30.87' },
-        { num: 4, bha: 0, description: 'NMDC', nm: 'Y', id: '2.88', od: '6.00', length: '29.46', toBit: '60.33' },
-        { num: 5, bha: 0, description: 'NMDC', nm: 'Y', id: '2.81', od: '5.88', length: '28.53', toBit: '88.86' },
-        { num: 6, bha: 0, description: 'X/O', nm: 'N', id: '2.88', od: '6.50', length: '3.26', toBit: '92.12' },
-        { num: 7, bha: 0, description: '±5 HWDP', nm: 'N', id: '2.50', od: '6.50', length: '1375.24', toBit: '1467.36' },
-      ];
+      const bhaData = await callWellSeekerAPI<any[]>(req, `wells/${wellId}/bha/${bhaNumber}`);
+      
+      // Transform Well Seeker Pro API response to our BHAComponent format
+      const bhaComponents: BHAComponent[] = bhaData.map((component, index) => ({
+        num: component.num || component.number || index + 1,
+        bha: component.bha || parseInt(bhaNumber, 10),
+        description: component.description || component.desc || '',
+        nm: component.nm || component.nonMagnetic || 'N',
+        id: component.id || component.innerDiameter || '0.00',
+        od: component.od || component.outerDiameter || '0.00',
+        length: component.length || component.len || '0.00',
+        toBit: component.toBit || component.distanceToBit || '0.00'
+      }));
 
       res.json(bhaComponents);
     } catch (error) {
@@ -268,29 +274,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId } = req.params;
 
-      // TODO: Update with actual Well Seeker Pro API endpoint once available
+      const paramsData = await callWellSeekerAPI<any>(req, `wells/${wellId}/drillingParameters`);
+      
+      // Transform Well Seeker Pro API response to our DrillingParameters format
       const parameters: DrillingParameters = {
-        plugIn: '1/0/00 0:00',
-        timeIn: '1/0/00 0:00',
-        timeOut: '3/30/14 17:45',
-        unplug: '1/0/00 0:00',
-        depthIn: '8,477',
-        depthOut: '8,477',
-        totalFootage: '6,590',
-        drillHours: '75.25',
-        operHours: '100149.75',
-        circHrs: '0.00',
-        pluggedHrs: '0.00',
-        bha: 1,
-        mwd: 0,
-        retrievable: 0,
-        reasonPOOH: 'Change BHA'
+        plugIn: paramsData.plugIn || paramsData.plugInTime || '',
+        timeIn: paramsData.timeIn || '',
+        timeOut: paramsData.timeOut || '',
+        unplug: paramsData.unplug || paramsData.unplugTime || '',
+        depthIn: paramsData.depthIn || '',
+        depthOut: paramsData.depthOut || '',
+        totalFootage: paramsData.totalFootage || paramsData.footage || '',
+        drillHours: paramsData.drillHours || paramsData.drillingHours || '',
+        operHours: paramsData.operHours || paramsData.operatingHours || '',
+        circHrs: paramsData.circHrs || paramsData.circulationHours || '',
+        pluggedHrs: paramsData.pluggedHrs || paramsData.pluggedHours || '',
+        bha: paramsData.bha || 0,
+        mwd: paramsData.mwd || 0,
+        retrievable: paramsData.retrievable || 0,
+        reasonPOOH: paramsData.reasonPOOH || paramsData.pullOutReason || ''
       };
 
       res.json(parameters);
     } catch (error) {
       console.error("Error fetching drilling parameters:", error);
       res.status(500).json({ error: "Failed to fetch drilling parameters" });
+    }
+  });
+
+  app.get("/api/wells/:wellId/bha-runs", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { wellId } = req.params;
+
+      const bhaRunsData = await callWellSeekerAPI<any[]>(req, `wells/${wellId}/bhaRuns`);
+      
+      // Transform to array of BHA run numbers
+      const bhaRuns = bhaRunsData.map((run, index) => run.bhaNumber || run.runNumber || index);
+
+      res.json(bhaRuns);
+    } catch (error) {
+      console.error("Error fetching BHA runs:", error);
+      // Return default if API doesn't support this endpoint yet
+      res.json([0, 1, 2]);
     }
   });
 
@@ -302,16 +331,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId } = req.params;
 
-      // TODO: Update with actual Well Seeker Pro API endpoint once available
-      const components: ToolComponent[] = [
-        { name: 'UBHO', sn: '65207', snOverride: '', lih: 'Depth In: 1,887', failure: 'None', npt: '0.00' },
-        { name: 'MuleShoe', sn: 'NA', snOverride: '', lih: 'Depth Out: 8,477', failure: 'None', npt: '0.00' },
-        { name: 'Helix', sn: '0', snOverride: '', lih: 'Total: 6,590', failure: 'None', npt: '0.00' },
-        { name: 'Pulser', sn: '0', snOverride: '', lih: '(Circ Hrs: 2.83)', failure: 'None', npt: '0.00' },
-        { name: 'Gamma', sn: '0', snOverride: '', lih: 'Drill Hrs: 72.42', failure: 'None', npt: '0.00' },
-        { name: 'SEA', sn: '0', snOverride: '', lih: 'Total: 22.00', failure: 'None', npt: '0.00' },
-        { name: 'Battery', sn: '0', snOverride: '', lih: '', failure: 'None', npt: '0.00' },
-      ];
+      const componentsData = await callWellSeekerAPI<any[]>(req, `wells/${wellId}/toolComponents`);
+      
+      // Transform Well Seeker Pro API response to our ToolComponent format
+      const components: ToolComponent[] = componentsData.map(component => ({
+        name: component.name || component.toolName || '',
+        sn: component.sn || component.serialNumber || '',
+        snOverride: component.snOverride || component.serialNumberOverride || '',
+        lih: component.lih || component.lifeInHole || '',
+        failure: component.failure || component.failureMode || 'None',
+        npt: component.npt || component.nonProductiveTime || '0.00'
+      }));
 
       res.json(components);
     } catch (error) {

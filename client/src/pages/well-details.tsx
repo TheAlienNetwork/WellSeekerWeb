@@ -16,7 +16,16 @@ interface WellDetailsPageProps {
 }
 
 export default function WellDetailsPage({ selectedWellId }: WellDetailsPageProps) {
-  const [selectedBHA, setSelectedBHA] = useState(1);
+  const [selectedBHA, setSelectedBHA] = useState("0");
+
+  // Fetch available BHA runs
+  const { data: bhaRuns = ["0"] } = useQuery({
+    queryKey: [`/api/wells/${selectedWellId}/bha-runs`],
+    enabled: !!selectedWellId,
+  });
+
+  const bhaOptions = bhaRuns.map(String);
+
   const { toast } = useToast();
 
   const { data: wellDetails, isLoading: isLoadingDetails } = useQuery({
@@ -109,7 +118,7 @@ export default function WellDetailsPage({ selectedWellId }: WellDetailsPageProps
             <BHADataTable
               components={bhaComponents}
               selectedBHA={selectedBHA}
-              availableBHAs={[1, 2, 3, 4]}
+              availableBHAs={bhaOptions}
               onSelectBHA={setSelectedBHA}
             />
           ) : null}
