@@ -15,6 +15,7 @@ import ReportsPage from "@/pages/reports";
 import NotFound from "@/pages/not-found";
 import type { Well } from "@/components/WellListTable";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/ui/use-toast";
 
 function Router() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -135,6 +136,54 @@ function Router() {
 }
 
 function App() {
+  const [user, setUser] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  // Setup global error handler for token expiration
+  useEffect(() => {
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+
+      if (response.status === 500) {
+        const clonedResponse = response.clone();
+        try {
+          const errorData = await clonedResponse.json();
+          if (errorData.error && errorData.error.includes("TOKEN_EXPIRED")) {
+            toast({
+              title: "Session Expired",
+              description: "Your session has expired. Please log in again.",
+              variant: "destructive",
+            });
+            setUser(null);
+            setLocation("/");
+          }
+        } catch (e) {
+          // Not a JSON response, ignore
+        }
+      }
+
+      return response;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [toast, setLocation]);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const data = await api.auth.me();
+        setUser(data.email);
+      } catch {
+        setUser(null);
+      }
+    }
+    checkAuth();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

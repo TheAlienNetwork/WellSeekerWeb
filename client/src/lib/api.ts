@@ -33,6 +33,11 @@ export const api = {
         body: JSON.stringify({ email, password }),
       }),
     
+    refreshToken: () =>
+      fetchAPI<{ success: boolean }>("/api/auth/refresh-token", {
+        method: "POST",
+      }),
+    
     logout: () =>
       fetchAPI<{ success: boolean }>("/api/auth/logout", {
         method: "POST",

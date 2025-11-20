@@ -34,14 +34,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper function to get Well Seeker Pro auth token
   async function getWellSeekerToken(req: any): Promise<string> {
-    // Check if we have a provided access token from environment
-    const providedToken = process.env.WELLSEEKER_ACCESS_TOKEN;
-    if (!providedToken) {
-      throw new Error("WELLSEEKER_ACCESS_TOKEN is not configured in Secrets. Please add it to continue.");
+    // Use session token if available
+    if (req.session.wellSeekerToken) {
+      console.log("Using Well Seeker token from session");
+      return req.session.wellSeekerToken;
     }
 
-    console.log("Using WELLSEEKER_ACCESS_TOKEN from environment");
-    return providedToken;
+    // Fallback to environment token (for backward compatibility)
+    const providedToken = process.env.WELLSEEKER_ACCESS_TOKEN;
+    if (providedToken) {
+      console.log("Using WELLSEEKER_ACCESS_TOKEN from environment");
+      return providedToken;
+    }
+
+    throw new Error("No authentication token available. Please log in.");
   }
 
   // Helper function to make authenticated API calls to Well Seeker Pro
@@ -124,25 +130,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email and password are required" });
       }
 
-      // Check if access token is configured
-      const accessToken = process.env.WELLSEEKER_ACCESS_TOKEN;
-      if (!accessToken) {
-        console.error("WELLSEEKER_ACCESS_TOKEN not configured in environment");
-        return res.status(500).json({ 
-          error: "Well Seeker Pro API token not configured. Please restart the application after adding WELLSEEKER_ACCESS_TOKEN to Secrets." 
-        });
+      // Authenticate with Well Seeker Pro API to get fresh tokens
+      const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
+      
+      console.log("Attempting to authenticate with Well Seeker Pro API for:", email);
+
+      const authResponse = await fetch("https://www.icpwebportal.com/api/authToken", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: email,
+          password: password,
+          productKey: productKey
+        }).toString(),
+      });
+
+      if (!authResponse.ok) {
+        const errorBody = await authResponse.text();
+        console.error("Authentication failed:", errorBody);
+        return res.status(401).json({ error: "Invalid Well Seeker Pro credentials" });
       }
 
-      console.log("Access token found, creating session for:", email);
+      const authData: WellSeekerAuthResponse = await authResponse.json();
+      
+      console.log("Authentication successful for:", email);
 
-      // Simple session creation - token is already validated
+      // Store credentials and tokens in session
       req.session.userId = email;
       req.session.userEmail = email;
+      req.session.wellSeekerCredentials = {
+        userName: email,
+        password: password,
+        productKey: productKey
+      };
+      req.session.wellSeekerToken = authData.access_token;
 
       res.json({ success: true, email });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  // Token refresh endpoint
+  app.post("/api/auth/refresh-token", async (req, res) => {
+    try {
+      if (!req.session.wellSeekerCredentials) {
+        return res.status(401).json({ error: "No saved credentials. Please log in again." });
+      }
+
+      const { userName, password, productKey } = req.session.wellSeekerCredentials;
+
+      console.log("Refreshing token for:", userName);
+
+      const authResponse = await fetch("https://www.icpwebportal.com/api/authToken", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName,
+          password,
+          productKey
+        }).toString(),
+      });
+
+      if (!authResponse.ok) {
+        const errorBody = await authResponse.text();
+        console.error("Token refresh failed:", errorBody);
+        // Clear session if credentials are no longer valid
+        req.session.destroy(() => {});
+        return res.status(401).json({ error: "Token refresh failed. Please log in again." });
+      }
+
+      const authData: WellSeekerAuthResponse = await authResponse.json();
+      req.session.wellSeekerToken = authData.access_token;
+
+      console.log("Token refreshed successfully for:", userName);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Token refresh error:", error);
+      res.status(500).json({ error: "Token refresh failed" });
     }
   });
 
@@ -284,18 +355,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Wells API Response Status: ${response.status} ${response.statusText}`);
       console.log(`Response Headers:`, Object.fromEntries(response.headers.entries()));
 
-      // If 401, try to refresh token
+      // If 401, try to refresh token using saved credentials
       if (response.status === 401) {
-        const refreshToken = process.env.WELLSEEKER_REFRESH_TOKEN;
-        if (refreshToken) {
-          console.log("Access token expired, attempting to refresh...");
+        if (req.session.wellSeekerCredentials) {
+          console.log("Access token expired, attempting to refresh with saved credentials...");
           try {
-            const refreshResponse = await fetch("https://www.icpwebportal.com/api/authToken/refresh", {
+            const { userName, password, productKey: credProductKey } = req.session.wellSeekerCredentials;
+            
+            const refreshResponse = await fetch("https://www.icpwebportal.com/api/authToken", {
               method: "POST",
               headers: {
-                "Content-Type": "application/json",
+                "Content-Type": "application/x-www-form-urlencoded",
               },
-              body: JSON.stringify({ refresh_token: refreshToken }),
+              body: new URLSearchParams({
+                userName,
+                password,
+                productKey: credProductKey
+              }).toString(),
             });
 
             if (refreshResponse.ok) {
@@ -317,18 +393,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } catch (refreshError) {
             console.error("Token refresh failed:", refreshError);
           }
-        } else {
-          console.error("No WELLSEEKER_REFRESH_TOKEN found in Secrets");
         }
         
         // If still 401 after refresh attempt
         if (response.status === 401) {
           const errorBody = await response.text();
           console.error(`Wells API 401 Error Response Body: ${errorBody}`);
-          console.error(`Token used (first 30 chars): ${token.substring(0, 30)}...`);
-          console.error(`UserName sent: ${req.session.userEmail}`);
-          console.error(`ProductKey sent: ${productKey}`);
-          throw new Error(`Authentication failed: The WELLSEEKER_ACCESS_TOKEN is invalid or expired. Please update it in Secrets. Error details: ${errorBody}`);
+          throw new Error(`TOKEN_EXPIRED: Your session has expired. Please log in again.`);
         }
       }
 
