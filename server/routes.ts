@@ -398,13 +398,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 response_keys: Object.keys(authResponse)
               });
 
-              const newToken = authResponse.access_token;
-
-              if (!newToken || newToken.length === 0) {
-                console.error("Failed to extract access_token from refresh response!");
-                console.error("Full response:", JSON.stringify(authResponse));
-                throw new Error("Invalid token received from refresh endpoint");
+              // Check if the response contains an error (invalid credentials)
+              if (authResponse.error === "invalid_grant" || !authResponse.access_token) {
+                console.error("Invalid credentials - clearing session and forcing re-login");
+                req.session.destroy(() => {});
+                throw new Error("TOKEN_EXPIRED: Your session has expired. Please log in again.");
               }
+
+              const newToken = authResponse.access_token;
 
               req.session.wellSeekerToken = newToken;
 
@@ -429,6 +430,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } else {
               const refreshError = await refreshResponse.text();
               console.error(`Token refresh failed: ${refreshResponse.status} - ${refreshError}`);
+              // Clear session on failed refresh
+              req.session.destroy(() => {});
             }
           } catch (refreshError) {
             console.error("Token refresh failed:", refreshError);
