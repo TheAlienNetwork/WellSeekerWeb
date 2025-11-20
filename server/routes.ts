@@ -99,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Token refresh failed:", refreshError);
         }
       }
-      
+
       throw new Error("Authentication token expired. Please update WELLSEEKER_ACCESS_TOKEN in Secrets.");
     }
 
@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use the correct endpoint from API documentation
       const wellsData = await callWellSeekerAPI<any[]>(req, "JobList");
-      
+
       // Transform Well Seeker Pro API response to our Well format
       const wells: Well[] = wellsData.map((well, index) => ({
         id: well.jobNum || String(index + 1),
@@ -196,25 +196,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { wellId } = req.params;
+      // Use JobInfo endpoint with jobNum parameter
+      const wellData = await callWellSeekerAPI<any>(req, `JobInfo?jobNum=${wellId}`);
 
-      const wellData = await callWellSeekerAPI<any>(req, `Job/${wellId}`);
-      
       // Transform Well Seeker Pro API response to our WellDetails format
       const wellDetails: WellDetails = {
-        wellName: wellData.actualWell || wellData.wellName || '',
+        wellName: wellData.actualWell || '',
         jobNumber: wellData.jobNum || wellId,
         operator: wellData.operator || '',
         rig: wellData.rig || '',
-        latitude: wellData.lat || wellData.latitude || '',
-        longitude: wellData.lon || wellData.longitude || '',
+        latitude: wellData.lat || '',
+        longitude: wellData.lon || '',
         depthIn: wellData.depthIn || '',
         depthOut: wellData.depthOut || '',
         totalFootage: wellData.totalFootage || '',
-        magCorrection: wellData.magCorr || wellData.magCorrection || '',
-        gridConv: wellData.gridConv || wellData.gridConvergence || '',
-        btotal: wellData.bTotal || wellData.btotal || '',
+        magCorrection: wellData.magCorr || '',
+        gridConv: wellData.gridConv || '',
+        btotal: wellData.bTotal || '',
         vs: wellData.vs || '',
-        dec: wellData.dec || wellData.declination || '',
+        dec: wellData.dec || '',
         dip: wellData.dip || ''
       };
 
@@ -234,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { wellId, bhaNumber } = req.params;
 
       const bhaData = await callWellSeekerAPI<any[]>(req, `BHA/${wellId}/${bhaNumber}`);
-      
+
       // Transform Well Seeker Pro API response to our BHAComponent format
       const bhaComponents: BHAComponent[] = bhaData.map((component, index) => ({
         num: component.num || component.number || index + 1,
@@ -266,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For drilling parameters, we need a run number - default to latest run
       const runNumber = runNum || '0';
       const paramsData = await callWellSeekerAPI<any>(req, `Run/${wellId}/${runNumber}`);
-      
+
       // Transform Well Seeker Pro API response to our DrillingParameters format
       const parameters: DrillingParameters = {
         plugIn: paramsData.plugIn || paramsData.plugInTime || '',
@@ -302,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { wellId } = req.params;
 
       const bhaRunsData = await callWellSeekerAPI<any[]>(req, `RunList/${wellId}`);
-      
+
       // Transform to array of BHA run numbers
       const bhaRuns = bhaRunsData.map((run, index) => run.runNum || run.bhaNumber || run.runNumber || index);
 
@@ -326,7 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Tool components require a run number - default to latest run
       const runNumber = runNum || '0';
       const componentsData = await callWellSeekerAPI<any[]>(req, `ToolComponents/${wellId}/${runNumber}`);
-      
+
       // Transform Well Seeker Pro API response to our ToolComponent format
       const components: ToolComponent[] = componentsData.map(component => ({
         name: component.name || component.toolName || '',
