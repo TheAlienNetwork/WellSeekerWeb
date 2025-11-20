@@ -61,8 +61,8 @@ function Router() {
 
   const handleSelectWell = (well: Well) => {
     setSelectedWellId(well.id);
-    setCurrentPage("details");
-    setLocation("/well-details");
+    setCurrentPage("dashboard");
+    setLocation(`/dashboard?wellId=${well.id}`);
   };
 
   const handleNavigate = (page: string) => {

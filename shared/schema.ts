@@ -95,7 +95,17 @@ export interface ToolComponent {
   npt: string;
 }
 
+export interface BHARun {
+  id: string;
+  runNumber: number;
+  bhaNumber: number;
+  mwdNumber: number;
+  wellId: string;
+}
+
 export interface WellDashboardData {
+  wellId: string;
+  runId: string;
   operator: string;
   rig: string;
   well: string;
@@ -177,4 +187,36 @@ export interface WellDashboardData {
   correctingMDG: string;
   battery3: string;
   babelfishSN: string;
+  muleShoe: string;
+  
+  // Manual overrides (N/N boxes)
+  ubhoSNOverride?: string;
+  helixSNOverride?: string;
+  pulserSNOverride?: string;
+  gammaSNOverride?: string;
+  directionalSNOverride?: string;
+  batterySNOverride?: string;
+  batterySN2Override?: string;
+  battery3Override?: string;
+  shockToolSNOverride?: string;
+  babelfishSNOverride?: string;
+  muleShoeOverride?: string;
+}
+
+export interface ComponentReportData {
+  dateOfActivity: string;
+  drivrNumber: string;
+  projectJobNum: string;
+  runNum: number;
+  circulatingHours: number;
+  edt: number;
+  personUpdatingActivity: string;
+  comments: string;
+}
+
+export interface ComponentExportRequest {
+  componentType: 'ubho' | 'muleshoe' | 'helix' | 'pulser' | 'gamma' | 'sea' | 'battery1' | 'battery2' | 'battery3' | 'shock' | 'babelfish';
+  wellId: string;
+  runId: string;
+  filePath?: string;
 }

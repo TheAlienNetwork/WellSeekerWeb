@@ -1,0 +1,1017 @@
+Sub PM_Helix()
+' Improved
+    'Call General.begincode
+    Sheet12.Range("I325:P325").ClearContents
+    Sheet12.Range("I338:P338").Copy
+    Sheet12.Range("I325:P325").PasteSpecial xlPasteValues
+    Sheet12.Range("I325:P325").Copy
+    serial = Sheet12.Range("H338").Value
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim validFileFound As Boolean
+    On Error GoTo oops
+        If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Helix\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Helix\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            Workbooks.Open folderPath & fileName
+            validFileFound = True
+            ' Check if the SN is "HP9xx"
+                If UCase(Left(serial, 3)) = "HP9" Then
+                MsgBox "ProtoType Helix - Recall after every run!!" & vbCrLf & _
+                "No Drivr needed - Red tag as Operations Requests Review" & vbCrLf & _
+                "Note: Recall per Engineering (ProtoType)", vbExclamation, "Prototype Helix"
+            End If
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        GoTo oops
+    End If
+    Sheet18.Range("I105").Value = Now
+    ActiveWorkbook.ActiveSheet.ListObjects(1).Range(1, 1).End(xlDown).Offset(1, 0).Select
+    Exit Sub
+oops:
+    Shell "explorer.exe" & " " & Environ("userprofile") & baseFolder, vbNormalFocus
+End Sub
+
+Sub PM_Pulser()
+    ' Improved
+    Call Helix_PMCheck
+    Sheet12.Range("I326:R326").ClearContents
+    Sheet12.Range("I339:R339").Copy
+    Sheet12.Range("I326:R326").PasteSpecial xlPasteValues
+    Sheet12.Range("I326:R326").Copy
+    serial = Sheet12.Range("H339").Value
+    Dim baseFolder As String
+    Dim folderOptions As Variant
+    Dim folderPath As String
+    Dim fileName As String
+    Dim validFileFound As Boolean
+    Dim workbookPath As String
+    Dim i As Integer
+    On Error GoTo oops
+        If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Pulsers\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Pulsers\"
+    End If
+    folderOptions = Array("MS HYBRID\", "RIME PULSERS\")
+    validFileFound = False
+    For i = LBound(folderOptions) To UBound(folderOptions)
+        folderPath = baseFolder & folderOptions(i) & Dir(baseFolder & folderOptions(i) & serial & "*", vbDirectory) & "\"
+        fileName = Dir(folderPath & serial & "*.xlsx")
+        Do While fileName <> ""
+            If InStr(fileName, "@msdir.com") = 0 Then
+                workbookPath = folderPath & fileName
+                Workbooks.Open workbookPath
+                validFileFound = True
+                ' Check if the folder path or file name includes "HT" or "High"
+                If InStr(1, workbookPath, "HT", vbTextCompare) > 0 Or _
+                   InStr(1, workbookPath, "Temp", vbTextCompare) > 0 Then
+                    MsgBox "This is a High Temp Probe - please recall for PM based on EDT hours", vbExclamation, "High Temp Warning"
+                End If
+                Exit Do
+            End If
+            fileName = Dir
+        Loop
+        If validFileFound Then Exit For
+    Next i
+    If Not validFileFound Then
+        GoTo oops
+    End If
+    Sheet18.Range("I107").Value = Now
+    ActiveWorkbook.ActiveSheet.ListObjects(1).Range(1, 1).End(xlDown).Offset(1, 0).Select
+    Exit Sub
+oops:
+    Shell "explorer.exe" & " " & Environ("userprofile") & baseFolder, vbNormalFocus
+End Sub
+Sub PM_gamgam()
+' Improved
+    'Call General.begincode
+    Call Pulser_PMCheck
+    Sheet12.Range("I327:R327").ClearContents
+    Sheet12.Range("I340:R340").Copy
+    Sheet12.Range("I327:R327").PasteSpecial xlPasteValues
+    Sheet12.Range("I327:R327").Copy
+    serial = Sheet12.Range("H340").Value
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim validFileFound As Boolean
+    On Error GoTo oops
+        If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Gamma\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Gamma\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            Workbooks.Open folderPath & fileName
+            validFileFound = True
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        GoTo oops
+    End If
+    Sheet18.Range("I109").Value = Now
+    ActiveWorkbook.ActiveSheet.ListObjects(1).Range(1, 1).End(xlDown).Offset(1, 0).Select
+    Exit Sub
+oops:     Shell "explorer.exe" & " " & baseFolder, vbNormalFocus
+End Sub
+Sub PM_SEA()
+    ' Improved
+    ' Call General.begincode
+    If Sheet18.Range("B15").Value <> "" Then
+        Call GAM_PMCheck
+    Else
+        Call Pulser_PMCheck
+    End If
+    Sheet12.Range("I328:R328").ClearContents
+    Sheet12.Range("I341:R341").Copy
+    Sheet12.Range("I328:R328").PasteSpecial xlPasteValues
+    Sheet12.Range("I328:R328").Copy
+    serial = Sheet12.Range("H341").Value
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim validFileFound As Boolean
+    Dim workbookPath As String
+    On Error GoTo oops
+        If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\SEA\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\SEA\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & "*" & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            workbookPath = folderPath & fileName
+            Workbooks.Open workbookPath
+            validFileFound = True
+            ' Check if the folder path or file name includes "HT" or "High"
+            If InStr(1, workbookPath, "HT", vbTextCompare) > 0 Or _
+               InStr(1, workbookPath, "Temp", vbTextCompare) > 0 Then
+                MsgBox "This is a High Temp Probe - please recall for PM based on EDT hours", vbExclamation, "High Temp Warning"
+            End If
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        GoTo oops
+    End If
+    Sheet18.Range("I111").Value = Now
+    ActiveWorkbook.ActiveSheet.ListObjects(1).Range(1, 1).End(xlDown).Offset(1, 0).Select
+    Exit Sub
+oops:
+    Shell "explorer.exe" & " " & baseFolder, vbNormalFocus
+End Sub
+
+Sub PM_Battone()
+    ' Improved
+    Call General.begincode
+    Call SEA_PMCheck
+    Sheet12.Range("I329:AA329").ClearContents
+    Sheet12.Range("I342:AA342").Copy
+    Sheet12.Range("I329:AA329").PasteSpecial xlPasteValues
+    Sheet12.Range("I329:AA329").Copy
+    serial = Sheet12.Range("H342").Value
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim validFileFound As Boolean
+    Dim workbookPath As String
+    On Error GoTo oops
+        If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Battery\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Battery\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    ' Disable events to prevent Workbook_Open from running
+    Application.EnableEvents = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            workbookPath = folderPath & fileName
+            Workbooks.Open workbookPath
+            validFileFound = True
+            ' Check if the folder path or file name includes "HT" or "High"
+            If InStr(1, workbookPath, "HT", vbTextCompare) > 0 Or _
+               InStr(1, workbookPath, "Temp", vbTextCompare) > 0 Then
+                MsgBox "This is a High Temp Battery - Watson dumps will not be complete", vbExclamation, "High Temp Warning"
+            End If
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    Application.EnableEvents = True
+    If Not validFileFound Then
+        GoTo oops
+    End If
+    Sheet18.Range("I113").Value = Now
+    ActiveWorkbook.ActiveSheet.ListObjects(1).Range(1, 1).End(xlDown).Offset(1, 0).Select
+    Exit Sub
+oops:
+    Application.EnableEvents = True ' Ensure events are re-enabled on error
+    Shell "explorer.exe" & " " & baseFolder, vbNormalFocus
+End Sub
+
+Sub PM_Batttwo()
+    ' Improved
+    Call General.begincode
+    Call BattOne_PMCheck
+    Sheet12.Range("I330:AA330").ClearContents
+    Sheet12.Range("I343:AA343").Copy
+    Sheet12.Range("I330:AA330").PasteSpecial xlPasteValues
+    Sheet12.Range("I330:AA330").Copy
+    serial = Sheet12.Range("H343").Value
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim validFileFound As Boolean
+    Dim workbookPath As String
+    On Error GoTo oops
+        If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Battery\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Battery\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    ' Disable events to prevent Workbook_Open from running
+    Application.EnableEvents = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            workbookPath = folderPath & fileName
+            Workbooks.Open workbookPath
+            validFileFound = True
+            ' Check if the folder path or file name includes "HT" or "High"
+            If InStr(1, workbookPath, "HT", vbTextCompare) > 0 Or _
+               InStr(1, workbookPath, "High", vbTextCompare) > 0 Then
+                MsgBox "This is a High Temp Probe - please recall for PM based on EDT hours", vbExclamation, "High Temp Warning"
+            End If
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    ' Re-enable events after opening the workbook
+    Application.EnableEvents = True
+    If Not validFileFound Then
+        GoTo oops
+    End If
+    Sheet18.Range("I115").Value = Now
+    ActiveWorkbook.ActiveSheet.ListObjects(1).Range(1, 1).End(xlDown).Offset(1, 0).Select
+    Exit Sub
+oops:
+    Application.EnableEvents = True ' Ensure events are re-enabled on error
+    Shell "explorer.exe" & " " & baseFolder, vbNormalFocus
+End Sub
+
+
+Sub PM_Shock()
+'Improved
+    'Call General.begincode
+    Call BattTwo_PMCheck
+    Sheet12.Range("I331:R331").ClearContents
+    Sheet12.Range("I344:R344").Copy
+    Sheet12.Range("I331:R331").PasteSpecial xlPasteValues
+    Sheet12.Range("I331:R331").Copy
+    serial = Sheet12.Range("H344").Value
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim validFileFound As Boolean
+    On Error GoTo oops
+        If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Shock Isolator\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Shock Isolator\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            Workbooks.Open folderPath & fileName
+            validFileFound = True
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        GoTo oops
+    End If
+    Sheet18.Range("I117").Value = Now
+    ActiveWorkbook.ActiveSheet.ListObjects(1).Range(1, 1).End(xlDown).Offset(1, 0).Select
+    Exit Sub
+oops:     Shell "explorer.exe" & " " & baseFolder, vbNormalFocus
+End Sub
+Sub PM_BattThree()
+'Improved
+    Call General.begincode
+    Sheet12.Range("I332:AA332").ClearContents
+    Sheet12.Range("I345:AA345").Copy
+    Sheet12.Range("I332:AA332").PasteSpecial xlPasteValues
+    Sheet12.Range("I332:AA332").Copy
+    serial = Sheet12.Range("H345").Value
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim validFileFound As Boolean
+    On Error GoTo oops
+        If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Battery\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Battery\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+         ' Disable events to prevent Workbook_Open from running
+    Application.EnableEvents = False
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            Workbooks.Open folderPath & fileName
+            validFileFound = True
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        GoTo oops
+    End If
+        ' Re-enable events after opening the workbook
+    Application.EnableEvents = True
+    Sheet18.Range("I119").Value = Now
+    ActiveWorkbook.ActiveSheet.ListObjects(1).Range(1, 1).End(xlDown).Offset(1, 0).Select
+    Exit Sub
+oops:     Shell "explorer.exe" & " " & baseFolder, vbNormalFocus
+End Sub
+Sub Helix_PMCheck()
+' Improved
+    Dim serial As String
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim lastModified As Date
+    Dim validFileFound As Boolean
+    serial = Sheet12.Range("H338").Value
+    If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Helix\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Helix\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            lastModified = FileDateTime(folderPath & fileName)
+            Sheet18.Range("J105:K105").Value = lastModified
+            validFileFound = True
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        MsgBox "File not found for serial: " & serial, vbExclamation
+    End If
+    Sheet18.Range("L105:N105").Value = Now
+    Exit Sub
+End Sub
+Sub Pulser_PMCheck()
+' Improved
+    Dim serial As String
+    Dim baseFolder As String
+    Dim folderOptions As Variant
+    Dim folderPath As String
+    Dim fileName As String
+    Dim lastModified As Date
+    Dim validFileFound As Boolean
+    Dim i As Integer
+    serial = Sheet12.Range("H339").Value
+    If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Pulsers\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Pulsers\"
+    End If
+    folderOptions = Array("RIME PULSERS\", "MS HYBRID\")
+    validFileFound = False
+    For i = LBound(folderOptions) To UBound(folderOptions)
+        folderPath = baseFolder & folderOptions(i) & Dir(baseFolder & folderOptions(i) & serial & "*", vbDirectory) & "\"
+        fileName = Dir(folderPath & serial & "*.xlsx")
+        Do While fileName <> ""
+            If InStr(fileName, "@msdir.com") = 0 Then
+                lastModified = FileDateTime(folderPath & fileName)
+                Sheet18.Range("J107:K107").Value = lastModified
+                validFileFound = True
+                Exit Do
+            End If
+            fileName = Dir
+        Loop
+        If validFileFound Then Exit For
+    Next i
+    If Not validFileFound Then
+        MsgBox "File not found for serial: " & serial, vbExclamation
+    End If
+    Sheet18.Range("L107:N107").Value = Now
+    Exit Sub
+End Sub
+Sub GAM_PMCheck()
+' Improved
+    Dim serial As String
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim lastModified As Date
+    Dim validFileFound As Boolean
+    serial = Sheet12.Range("H340").Value
+    If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Gamma\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Gamma\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            lastModified = FileDateTime(folderPath & fileName)
+            Sheet18.Range("J109:K109").Value = lastModified
+            validFileFound = True
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        MsgBox "File not found for serial: " & serial, vbExclamation
+    End If
+    Sheet18.Range("L109:N109").Value = Now
+End Sub
+Sub SEA_PMCheck()
+    ' Improved
+    Dim serial As String
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim lastModified As Date
+    Dim validFileFound As Boolean
+    serial = Sheet12.Range("H341").Value
+    If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\SEA\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\SEA\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & "*" & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            lastModified = FileDateTime(folderPath & fileName)
+            Sheet18.Range("J111:K111").Value = lastModified
+            validFileFound = True
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        MsgBox "File not found for serial: " & serial, vbExclamation
+    End If
+    Sheet18.Range("L111:N111").Value = Now
+End Sub
+Sub BattOne_PMCheck()
+' Improved
+    Dim serial As String
+    Dim baseFolder As String
+    Dim folderPath As String
+    Dim fileName As String
+    Dim lastModified As Date
+    Dim validFileFound As Boolean
+    serial = Sheet12.Range("H342").Value
+    If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Battery\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Battery\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            lastModified = FileDateTime(folderPath & fileName)
+            Sheet18.Range("J113:K113").Value = lastModified
+            validFileFound = True
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        MsgBox "File not found for serial: " & serial, vbExclamation
+    End If
+    Sheet18.Range("L113:N113").Value = Now
+End Sub
+Sub BattTwo_PMCheck()
+'Improved
+    Dim serial As String
+    Dim filePath As String
+    Dim lastModified As Date
+    serial = Sheet12.Range("H343").Value
+    If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Battery\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Battery\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            lastModified = FileDateTime(folderPath & fileName)
+            Sheet18.Range("J115:K115").Value = lastModified
+            validFileFound = True
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        MsgBox "File not found for serial: " & serial, vbExclamation
+    End If
+    Sheet18.Range("L115:N115").Value = Now
+End Sub
+Sub ShockTool_PMCheck()
+'Improved
+    Dim serial As String
+    Dim filePath As String
+    Dim lastModified As Date
+    serial = Sheet12.Range("H344").Value
+    If Sheet18.Range("B99").Value = True Then
+        baseFolder = Environ("userprofile") & "\Box\Shop\MWD Maintenance\Shock Isolator\"
+    Else
+        baseFolder = Environ("userprofile") & "\Box\MWD Maintenance\Shock Isolator\"
+    End If
+    folderPath = baseFolder & Dir(baseFolder & serial & "*", vbDirectory) & "\"
+    validFileFound = False
+    fileName = Dir(folderPath & serial & "*.xlsm")
+    Do While fileName <> ""
+        If InStr(fileName, "@msdir.com") = 0 Then
+            lastModified = FileDateTime(folderPath & fileName)
+            Sheet18.Range("J117:K117").Value = lastModified
+            validFileFound = True
+            Exit Do
+        End If
+        fileName = Dir
+    Loop
+    If Not validFileFound Then
+        MsgBox "File not found for serial: " & serial, vbExclamation
+    End If
+    Sheet18.Range("L117:N117").Value = Now
+End Sub
+Sub clearpost()
+'Done
+    Sheet18.Range("A20,C11:D11,C13:D20,B26:F28,B29:P30,C9:E9,H9").ClearContents
+    Sheet12.Range("K336").Value = "False" 'Post Remote = false?
+End Sub
+Sub postpicker()
+'Done
+    uid = Sheet12.Range("L277").Value
+    Set lfound = Sheet14.ListObjects("GOTEC_Table").ListColumns(1).Range
+    Set found = lfound.Find(What:=uid)
+    
+    If Not found Is Nothing Then 'Checks if Pre/Post Previously logged (Finds row)
+        Set MyPost = Sheet14.ListObjects("GOTEC_Table").ListColumns("Post Date").Range.Rows(found.Row)
+    Else
+        Set MyPost = Nothing
+    End If
+    Set btn = Sheet18.Shapes("Graphic 2")
+        j = 1
+    If MyPost Is Nothing Then 'Checks if Post Date exists
+        btn.Fill.ForeColor.RGB = RGB(0, 0, 0)
+        Call clearpost
+        Exit Sub
+    End If
+    
+    btn.Fill.ForeColor.RGB = RGB(150, 192, 192)
+               
+    Sheet18.Range("C9").Value = found.Offset(0, 14 - 1).Value 'EDT
+    Sheet18.Range("H9").Value = found.Offset(0, 22 - 1).Value 'Circ Hrs
+    Sheet18.Range("H25").Value = found.Offset(0, 100 - 1).Value 'RSS Comms
+    Sheet18.Range("B26").Value = found.Offset(0, 13 - 1).Value 'Post Notes
+    Sheet18.Range("B29").Value = found.Offset(0, 15 - 1).Value 'BattA Notes
+    Sheet18.Range("B30").Value = found.Offset(0, 16 - 1).Value 'BattB Notes
+    
+'fill SN overrides
+                If Sheet18.Range("B11").Value <> found.Offset(0, 27 - 1) Then
+                Sheet18.Range("C11").Value = found.Offset(0, 27 - 1).Value
+                Else: End If
+                'Sheet18.Range("G11").Value = found.Offset(0, 28 - 1).Value
+                
+                '2 - Muleshoe
+                'Sheet18.Range("G8").Value = found.Offset(0, 32 - 1).Value
+                'Sheet18.Range("C12").Value = found.Offset(0, 33 - 1).Value
+                'Sheet18.Range("G12").Value = found.Offset(0, 31 - 1).Value
+                
+                '3
+                'Sheet18.Range("G8").Value = found.Offset(0, 38 - 1).Value
+                If Sheet18.Range("B13").Value <> found.Offset(0, 35 - 1) Then
+                Sheet18.Range("C13").Value = found.Offset(0, 35 - 1).Value
+                Else: End If
+                'Sheet18.Range("G13").Value = found.Offset(0, 40 - 1).Value
+                
+                '4
+                'Sheet18.Range("G8").Value = found.Offset(0, 44 - 1).Value
+                If Sheet18.Range("B14").Value <> found.Offset(0, 39 - 1) Then
+                Sheet18.Range("C14").Value = found.Offset(0, 39 - 1).Value
+                Else: End If
+                'Sheet18.Range("G14").Value = found.Offset(0, 46 - 1).Value
+                
+                '5
+                'Sheet18.Range("G8").Value = found.Offset(0, 50 - 1).Value
+                If Sheet18.Range("B15").Value <> found.Offset(0, 43 - 1) Then
+                Sheet18.Range("C15").Value = found.Offset(0, 43 - 1).Value
+                Else: End If
+                'Sheet18.Range("G15").Value = found.Offset(0, 52 - 1).Value
+                
+                '6
+                'Sheet18.Range("G8").Value = found.Offset(0, 56 - 1).Value
+                If Sheet18.Range("B16").Value <> found.Offset(0, 47 - 1) Then
+                Sheet18.Range("C16").Value = found.Offset(0, 47 - 1).Value
+                Else: End If
+                'Sheet18.Range("G16").Value = found.Offset(0, 58 - 1).Value
+                
+                '7
+                'Sheet18.Range("G8").Value = found.Offset(0, 62 - 1).Value
+                If Sheet18.Range("B17").Value <> found.Offset(0, 51 - 1) Then
+                Sheet18.Range("C17").Value = found.Offset(0, 51 - 1).Value
+                Else: End If
+                'Sheet18.Range("G17").Value = found.Offset(0, 64 - 1).Value
+                
+                '8
+                'Sheet18.Range("G8").Value = found.Offset(0, 68 - 1).Value
+                If Sheet18.Range("B18").Value <> found.Offset(0, 55 - 1) Then
+                Sheet18.Range("C18").Value = found.Offset(0, 55 - 1).Value
+                Else: End If
+                If Sheet18.Range("B19").Value <> found.Offset(0, 59 - 1) Then
+                Sheet18.Range("C19").Value = found.Offset(0, 59 - 1).Value
+                Else: End If
+        
+    For i = 82 To 90 'iterate through and populate previous boxes
+        Sheet12.Range("BL3").Offset(0, j).Value = found.Offset(0, i).Value 'fill up the issues checkbox
+        j = j + 1
+    Next i
+End Sub
+Sub launchlogtec()
+'Done
+    Call General.begincode
+        logt = Environ("userprofile") & "\box\gotec\software\hal\support\LOGTEC\Active\logtec.exe"
+        X = Shell(logt, vbNormalFocus)
+    Call General.endcode
+End Sub
+Sub launchpdc()
+'Done
+    Call General.begincode
+        pdc = Environ("userprofile") & "\box\gotec\software\hal\support\PDC\Active\pdc.exe"
+        X = Shell(pdc, vbNormalFocus)
+    Call General.endcode
+End Sub
+Sub launchgdc()
+'Done
+    Call General.begincode
+        gdc = Environ("userprofile") & "\box\gotec\software\hal\support\GDC\Active\gld.exe"
+        X = Shell(gdc, vbNormalFocus)
+    Call General.endcode
+End Sub
+Sub launchwats()
+'Done
+    Call General.begincode
+        wats = Environ("userprofile") & "\box\gotec\software\hal\support\innova watson\watson.exe"
+        X = Shell(wats, vbNormalFocus)
+    Call General.endcode
+End Sub
+Sub createtag()
+    'Done
+    If Sheet18.Range("B19").Value = "" Or Left(Sheet18.Range("B19").Value, 1) = "5" Then
+    Call BattTwo_PMCheck
+    Else
+    Call ShockTool_PMCheck
+    End If
+    Dim region As String
+    Dim job1 As String
+    Dim rn As String
+    Dim useAlternateData As Boolean
+    
+    ' Check the value in 'Read Files'!G335
+    useAlternateData = Sheet12.Range("G335").Value = True
+
+    ask = MsgBox("Are you sure?", vbYesNo, "Create Tags")
+    If ask = vbNo Then
+        Exit Sub
+    End If
+
+    'fill data
+    If useAlternateData Then
+        ' Use alternate data if 'Read Files'!G335 is "TRUE"
+        Sheet19.Range("A9:A12").Value = Sheet18.Range("E11:E14").Value
+        Sheet19.Range("A13:A21").Value = Sheet18.Range("E16:E24").Value
+        Sheet19.Range("B9:B12").Value = Sheet12.Range("H336:H339").Value
+        Sheet19.Range("B13:B21").Value = Sheet12.Range("H341:H349").Value
+        
+    Else
+        ' Use original data if 'Read Files'!G335 is "FALSE"
+        Sheet19.Range("A9:A21").Value = Sheet18.Range("E11:E24").Value
+        Sheet19.Range("B9:B21").Value = Sheet12.Range("H336:H349").Value
+        
+    End If
+
+    If IsEmpty(Sheet19.Range("A16").Value) Then Sheet19.Range("I16:K16").ClearContents
+    If IsEmpty(Sheet19.Range("A17").Value) Then Sheet19.Range("I17:K17").ClearContents
+    Sheet19.Range("G6").Value = Sheet18.Range("F46").Value
+    Sheet19.Range("C9:C17").Value = Sheet18.Range("C9").Value
+    If IsEmpty(Sheet19.Range("A16").Value) Then Sheet19.Range("C16").ClearContents
+    If IsEmpty(Sheet19.Range("A17").Value) Then Sheet19.Range("C17").ClearContents
+    Sheet19.Range("C3:F6").Value = Sheet18.Range("B43:E46").Value
+    Sheet19.Range("J3:L6").Value = Sheet18.Range("I43:K46").Value
+    Sheet19.Range("B23").Value = Sheet18.Range("B25").Value
+    region = Sheet12.Range("O289").Value
+    job1 = Sheet12.Range("O288").Value
+    rn = Sheet18.Range("G2").Value
+
+    Sheet19.Visible = xlSheetVisible
+    Sheet19.Copy
+
+    On Error Resume Next
+    folderName = Environ("userprofile") & "\Box\GOTEC\Traveler Tags\" & region & "\" & job1 & "\"
+    If Dir(folderName) = "" Then
+        'MkDir Environ("userprofile") & "\Box\GOTEC\Traveler Tags\" & region & "\" & job1 * "\"
+        MkDir folderName
+    End If
+
+    ActiveWorkbook.SaveAs fileName:=folderName & job1 & " R" & rn & ".xlsx", _
+        FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+
+    Sheet19.Range("A9:A22,B9:B22,C9:D22,C2:F6,J2:L6,B23").Value = ""
+    Sheet19.Range("I9:K17").Value = "Released to run again"
+    Sheet19.Visible = xlSheetHidden
+End Sub
+Sub findtag()
+'Done
+    Dim region As String
+    Dim job1 As String
+
+    region = Sheet12.Range("O289").Value
+    job1 = Sheet12.Range("O288").Value
+
+    folderName = Environ("userprofile") & "\Box\GOTEC\Traveler Tags\" & region & "\" & job1 & "\"
+    If Dir(folderName) <> "" Then
+        Shell "C:\WINDOWS\explorer.exe """ & folderName, vbNormalFocus
+    Else
+        folderName = Environ("userprofile") & "\Box\GOTEC\Traveler Tags\" & region & "\"
+        Shell "C:\WINDOWS\explorer.exe """ & folderName, vbNormalFocus
+    End If
+End Sub
+Sub Logpost()
+'Done
+    Call General.begincode
+    Set datarng = Sheet12.Range("B3:DD3")
+    uid = Sheet12.Range("O290").Value
+    
+    Workbooks.Open fileName:=Environ("Userprofile") & "\Box\GOTEC\software\hal\logger\WS_GOTEC Additions.xlsx"
+    
+    Set wb2 = ActiveWorkbook
+    wb2.Sheets(1).Select
+    Dim tbL As ListObject
+    Set tbL = wb2.Sheets(1).ListObjects(1)
+    Set lfound = tbL.ListColumns(1).Range.Find(uid)
+    
+    If Not lfound Is Nothing Then
+        rw = lfound.Row - 2
+        rec = tbL.ListRows(rw - 3).Range
+        i = 1
+        Dim sele As Variant
+        For Each sele In rec
+        
+            If datarng.Cells(1, i).Value = "" Or _
+            datarng.Cells(1, i).Value = tbL.Range(rw, i + 1).Value Then
+                tbL.Range(rw, i).Select
+                i = i + 1
+            ElseIf datarng.Cells(1, i).Value <> tbL.Range(rw, i + 1).Value Then
+                If i = 7 Or _
+                tbL.Range(rw, i + 1).Value = "" Then
+                    tbL.Range(rw, i + 1).Value = datarng.Cells(1, i).Value
+                    i = i + 1
+                Else
+                    ansr = MsgBox("Do you wish to overwrite " & tbL.Range(2, i + 1).Value & " ?" & vbCrLf & _
+                            "Previous Value: " & tbL.Range(rw, i + 1).Value & vbCrLf & _
+                            "New Value: " & datarng.Cells(1, i).Value, _
+                            vbYesNo, "Overwrite Record Field")
+                    If ansr = vbYes Then
+                        tbL.Range(rw, i + 1).Value = datarng.Cells(1, i).Value
+                        i = i + 1
+                    Else
+                        i = i + 1
+                    End If
+                End If
+            Else
+                'write new data
+                tbL.Range(rw, i + 1).Value = datarng.Cells(1, i).Value
+                i = i + 1
+            End If
+        Next
+    Else
+        Set nrec = tbL.ListRows.Add
+            nrec.Range(1) = uid
+            i = 1
+            For Each sele In nrec.Range
+                With nrec
+                    .Range(i + 1) = datarng.Cells(1, i)
+                     i = i + 1
+                 End With
+            Next sele
+    End If
+    Workbooks("WS_GOTEC Additions.XLSX").Save
+    Workbooks("WS_GOTEC Additions.XLSX").Close 'savechanges:=True
+    wb1.Activate
+    ActiveWorkbook.Connections("Query - GOTEC_Table").Refresh
+    Call General.endcode
+    Call postpicker
+    MsgBox "Update Successful!"
+    Sheet18.Range("C9:E9,H9").ClearContents
+    Sheet18.Range("I100:N118").ClearContents
+End Sub
+
+Sub batt1report()
+'Done
+    Call General.begincode
+    Dim xFilePath As String
+    Dim strPath As String
+    Dim strfile As String
+    Dim wsA As Worksheet
+    Dim loadfile8 As Range
+    Dim SN As String
+    SN = Sheet12.Range("H342").Value
+    jobrun = Sheet12.Range("O288").Value & " R" & Sheet18.Range("G2").Value
+    
+    If Sheet18.Range("U3").Value = "True" Then
+        If Sheet18.Range("I11").Value <> "" Then
+            Plugin = Sheet18.Range("I11").Value
+        Else
+            Plugin = 36526.0416666667
+        End If
+        If Sheet18.Range("I12").Value <> "" Then
+            Unplug = Sheet18.Range("I12").Value
+        Else
+            Unplug = 55153.9583333333
+        End If
+    Else
+        Plugin = 36526.0416666667
+        Unplug = 55153.9583333333
+    End If
+        
+    Workbooks.Open (Environ("userprofile") & "\Box\GOTEC\Software\HAL\Support\Batteries_Innova\active.xlsx")
+    Set battwb = ActiveWorkbook
+    Range("G4").Value = SN
+    Range("G5").Value = Plugin
+    Range("G6").Value = Unplug
+    Range("b28:r28").Select
+    Range(Selection, Selection.End(xlDown)).ClearContents
+    'ChDir Environ("userprofile") & "\desktop\"
+    dTop = CreateObject("WScript.Shell").SpecialFolders("Desktop")
+
+    With fd
+        .AllowMultiSelect = False
+        .Title = "Battery File Selection - CSV"
+        .Filters.Clear
+        .Filters.Add "CSV Files", "*.csv", 1
+        .InitialFileName = dTop
+        .Show
+        If .SelectedItems.Count > 0 Then
+            xFilePath = .SelectedItems.Item(1)
+        Else:
+''            Sheet1.Range("G5").Value = 43466.375
+''            Sheet1.Range("G6").Value = 44695.375
+            'Sheet1.Select
+            Application.ScreenUpdating = True
+            battwb.Close SaveChanges = False
+            Exit Sub
+        End If
+    End With
+    Workbooks.Open xFilePath
+    Set wb2 = ActiveWorkbook
+    Range("A6:Q6").Select
+    Range(Selection, Selection.End(xlDown)).Copy
+    battwb.Activate
+    Range("B28").PasteSpecial xlPasteValues
+    batt1data = Range("M4").Value
+    Application.CutCopyMode = False
+    wb2.Close
+    
+    Set wsA = ActiveSheet
+    strPath = Environ("userprofile") & "\desktop\"
+    strfile = jobrun & "_" & SN & "_BattA_DATA.pdf"
+    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, fileName:=strfile
+    battwb.Close SaveChanges = False
+    Sheet18.Range("b29").Value = batt1data
+    Shex.Open (dTop & "\" & strfile)
+End Sub
+Sub batt2report()
+'Done
+    Call General.begincode
+    Dim xFilePath As String
+    Dim strPath As String
+    Dim strfile As String
+    Dim wsA As Worksheet
+    Dim loadfile8 As Range
+    Dim SN As String
+    SN = Sheet12.Range("H343").Value
+    jobrun = Sheet12.Range("O288").Value & " R" & Sheet18.Range("G2").Value
+    
+    If Sheet18.Range("U3").Value = "True" Then
+        If Sheet18.Range("I11").Value <> "" Then
+            Plugin = Sheet18.Range("I11").Value
+        Else
+            Plugin = 36526.0416666667
+        End If
+        If Sheet18.Range("I12").Value <> "" Then
+            Unplug = Sheet18.Range("I12").Value
+        Else
+            Unplug = 55153.9583333333
+        End If
+    Else
+        Plugin = 36526.0416666667
+        Unplug = 55153.9583333333
+    End If
+        
+    Workbooks.Open (Environ("userprofile") & "\Box\GOTEC\Software\HAL\Support\Batteries_Innova\active.xlsx")
+    Set battwb = ActiveWorkbook
+    Range("G4").Value = SN
+    Range("G5").Value = Plugin
+    Range("G6").Value = Unplug
+    Range("b28:r28").Select
+    Range(Selection, Selection.End(xlDown)).ClearContents
+    'ChDir Environ("userprofile") & "\desktop\"
+    dTop = CreateObject("WScript.Shell").SpecialFolders("Desktop")
+    
+    With fd
+        .AllowMultiSelect = False
+        .Title = "Battery File Selection - CSV"
+        .Filters.Clear
+        .Filters.Add "CSV Files", "*.csv", 1
+        .InitialFileName = dTop
+        .Show
+        If .SelectedItems.Count > 0 Then
+            xFilePath = .SelectedItems.Item(1)
+        Else:
+''            Sheet1.Range("G5").Value = 43466.375
+''            Sheet1.Range("G6").Value = 44695.375
+            'Sheet1.Select
+            Application.ScreenUpdating = True
+            battwb.Close SaveChanges = False
+            Exit Sub
+        End If
+    End With
+    Workbooks.Open xFilePath
+    Set wb2 = ActiveWorkbook
+    Range("A6:Q6").Select
+    Range(Selection, Selection.End(xlDown)).Copy
+    battwb.Activate
+    Range("B28").PasteSpecial xlPasteValues
+    batt1data = Range("M4").Value
+    Application.CutCopyMode = False
+    wb2.Close
+    
+    Set wsA = ActiveSheet
+    strPath = Environ("userprofile") & "\desktop\"
+    strfile = jobrun & "_" & SN & "_BattB_DATA.pdf"
+    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, fileName:=strfile
+    battwb.Close SaveChanges = False
+    Sheet18.Range("b30").Value = batt1data
+    Shex.Open (dTop & "\" & strfile)
+End Sub
+
+Sub runstats()
+'Done
+    Workbooks.Open fileName:=Environ("userprofile") & "\Box\GOTEC\Software\HAL\Support\Stats\analytics.xlsx"
+End Sub
+
+Sub ClearCheckPost()
+'Done
+    Sheet12.Range("CE3:CM3").ClearContents
+End Sub

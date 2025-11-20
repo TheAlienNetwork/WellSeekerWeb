@@ -163,6 +163,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ email: req.session.userEmail });
   });
 
+  // BHA Runs endpoint
+  app.get("/api/bha-runs/:wellId", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { wellId } = req.params;
+      const runs = await storage.getBHARuns(wellId);
+      res.json(runs);
+    } catch (error) {
+      console.error("Error fetching BHA runs:", error);
+      res.status(500).json({ error: "Failed to fetch BHA runs" });
+    }
+  });
+
   // Well Dashboard Data endpoint
   app.get("/api/dashboard/well-data", async (req, res) => {
     try {
@@ -170,11 +186,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const wellData = await storage.getWellDashboardData();
+      const { wellId, runId } = req.query;
+      
+      if (!wellId || !runId) {
+        return res.status(400).json({ error: "wellId and runId are required" });
+      }
+
+      const wellData = await storage.getWellDashboardData(String(wellId), String(runId));
       res.json(wellData);
     } catch (error) {
       console.error("Error fetching well dashboard data:", error);
       res.status(500).json({ error: "Failed to fetch well dashboard data" });
+    }
+  });
+
+  // Dashboard overrides endpoint
+  app.post("/api/dashboard/overrides", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { wellId, runId, overrides } = req.body;
+      
+      if (!wellId || !runId || !overrides) {
+        return res.status(400).json({ error: "wellId, runId, and overrides are required" });
+      }
+
+      await storage.updateWellDashboardOverrides(wellId, runId, overrides);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating dashboard overrides:", error);
+      res.status(500).json({ error: "Failed to update dashboard overrides" });
+    }
+  });
+
+  // Component report data endpoint
+  app.get("/api/component-report/:wellId/:runId/:componentType", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { wellId, runId, componentType } = req.params;
+      const userEmail = req.session.userEmail || "";
+      
+      // Extract username from email (first part before period)
+      const username = userEmail.split('@')[0].split('.')[0];
+
+      const reportData = await storage.getComponentReportData(wellId, runId, componentType);
+      
+      // Add username to report data
+      const finalData = {
+        ...reportData,
+        personUpdatingActivity: username,
+      };
+
+      res.json(finalData);
+    } catch (error) {
+      console.error("Error fetching component report data:", error);
+      res.status(500).json({ error: "Failed to fetch component report data" });
     }
   });
 

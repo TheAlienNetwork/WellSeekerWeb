@@ -1,7 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
-import type { WellDashboardData } from "@shared/schema";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useLocation, useSearch } from "wouter";
+import type { WellDashboardData, BHARun } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Loader2, 
   MapPin, 
@@ -13,7 +25,8 @@ import {
   XCircle,
   Calendar,
   Gauge,
-  Layers
+  Layers,
+  Save
 } from "lucide-react";
 import {
   Table,
@@ -23,13 +36,84 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
-  const { data: wellData, isLoading, error } = useQuery<WellDashboardData>({
-    queryKey: ["/api/dashboard/well-data"],
+  const searchParams = new URLSearchParams(useSearch());
+  const wellId = searchParams.get("wellId") || "10"; // Default to well ID 10
+  const runIdFromUrl = searchParams.get("runId");
+  
+  const [, setLocation] = useLocation();
+  const [selectedRunId, setSelectedRunId] = useState<string>(runIdFromUrl || "");
+  const [overrides, setOverrides] = useState<Record<string, string>>({});
+  const { toast } = useToast();
+
+  // Fetch BHA runs for this well
+  const { data: bhaRuns, isLoading: runsLoading } = useQuery<BHARun[]>({
+    queryKey: ["/api/bha-runs", wellId],
+    enabled: !!wellId,
   });
 
-  if (isLoading) {
+  // Set initial run ID when runs are loaded
+  useEffect(() => {
+    if (bhaRuns && bhaRuns.length > 0 && !selectedRunId) {
+      const defaultRunId = bhaRuns[0].id;
+      setSelectedRunId(defaultRunId);
+      setLocation(`/dashboard?wellId=${wellId}&runId=${defaultRunId}`);
+    }
+  }, [bhaRuns, selectedRunId, wellId, setLocation]);
+
+  // Fetch well dashboard data
+  const { data: wellData, isLoading, error } = useQuery<WellDashboardData>({
+    queryKey: ["/api/dashboard/well-data", wellId, selectedRunId],
+    enabled: !!wellId && !!selectedRunId,
+  });
+
+  // Save overrides mutation
+  const saveOverridesMutation = useMutation({
+    mutationFn: async (data: { wellId: string; runId: string; overrides: Partial<WellDashboardData> }) => {
+      const response = await fetch("/api/dashboard/overrides", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to save overrides");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/well-data", wellId, selectedRunId] });
+      toast({
+        title: "Success",
+        description: "Overrides saved successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save overrides",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRunChange = (newRunId: string) => {
+    setSelectedRunId(newRunId);
+    setLocation(`/dashboard?wellId=${wellId}&runId=${newRunId}`);
+  };
+
+  const handleSaveOverrides = () => {
+    saveOverridesMutation.mutate({
+      wellId,
+      runId: selectedRunId,
+      overrides,
+    });
+  };
+
+  if (runsLoading || isLoading) {
     return (
       <div className="flex items-center justify-center h-full" data-testid="loading-dashboard">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -63,6 +147,41 @@ export default function Dashboard() {
   return (
     <div className="h-full overflow-auto bg-background">
       <div className="p-6 space-y-6">
+        {/* Run # Selector */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 flex-1">
+                <Label htmlFor="run-select" className="text-sm font-medium whitespace-nowrap">
+                  Run #
+                </Label>
+                <Select value={selectedRunId} onValueChange={handleRunChange}>
+                  <SelectTrigger id="run-select" className="w-48" data-testid="select-run">
+                    <SelectValue placeholder="Select run" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bhaRuns?.map((run) => (
+                      <SelectItem key={run.id} value={run.id} data-testid={`option-run-${run.runNumber}`}>
+                        Run #{run.runNumber} (BHA #{run.bhaNumber}, MWD #{run.mwdNumber})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {Object.keys(overrides).length > 0 && (
+                <Button 
+                  onClick={handleSaveOverrides} 
+                  disabled={saveOverridesMutation.isPending}
+                  data-testid="button-save-overrides"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Overrides
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Header Section */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold" data-testid="text-well-name">{wellData.well}</h1>
@@ -282,54 +401,158 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Equipment Serial Numbers Table */}
+        {/* Equipment Serial Numbers Table with Override Inputs */}
         <Card data-testid="card-equipment">
           <CardHeader>
             <CardTitle>Equipment Serial Numbers</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Component</TableHead>
-                  <TableHead>Serial Number</TableHead>
-                  <TableHead>Component</TableHead>
-                  <TableHead>Serial Number</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="font-medium">UBHO</TableCell>
-                  <TableCell data-testid="text-ubho-sn">{wellData.ubhoSN || "N/A"}</TableCell>
-                  <TableCell className="font-medium">Helix</TableCell>
-                  <TableCell data-testid="text-helix-sn">{wellData.helixSN || "N/A"}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Pulser</TableCell>
-                  <TableCell data-testid="text-pulser-sn">{wellData.pulserSN || "N/A"}</TableCell>
-                  <TableCell className="font-medium">Gamma</TableCell>
-                  <TableCell data-testid="text-gamma-sn">{wellData.gammaSN || "N/A"}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Directional</TableCell>
-                  <TableCell data-testid="text-dir-sn">{wellData.directionalSN || "N/A"}</TableCell>
-                  <TableCell className="font-medium">Battery</TableCell>
-                  <TableCell data-testid="text-battery-sn">{wellData.batterySN || "N/A"}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Battery 2</TableCell>
-                  <TableCell data-testid="text-battery2-sn">{wellData.batterySN2 || "N/A"}</TableCell>
-                  <TableCell className="font-medium">Battery 3</TableCell>
-                  <TableCell data-testid="text-battery3-sn">{wellData.battery3 || "N/A"}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Shock Tool</TableCell>
-                  <TableCell data-testid="text-shock-sn">{wellData.shockToolSN || "N/A"}</TableCell>
-                  <TableCell className="font-medium">Babelfish</TableCell>
-                  <TableCell data-testid="text-babelfish-sn">{wellData.babelfishSN || "N/A"}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* UBHO */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">UBHO</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-ubho-sn">{wellData.ubhoSNOverride || wellData.ubhoSN || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.ubhoSNOverride || ""}
+                    onChange={(e) => setOverrides({ ...overrides, ubhoSNOverride: e.target.value })}
+                    className="w-32"
+                    data-testid="input-ubho-override"
+                  />
+                </div>
+                
+                {/* Helix */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">Helix</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-helix-sn">{wellData.helixSNOverride || wellData.helixSN || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.helixSNOverride || ""}
+                    onChange={(e) => setOverrides({ ...overrides, helixSNOverride: e.target.value })}
+                    className="w-32"
+                    data-testid="input-helix-override"
+                  />
+                </div>
+
+                {/* Pulser */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">Pulser</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-pulser-sn">{wellData.pulserSNOverride || wellData.pulserSN || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.pulserSNOverride || ""}
+                    onChange={(e) => setOverrides({ ...overrides, pulserSNOverride: e.target.value })}
+                    className="w-32"
+                    data-testid="input-pulser-override"
+                  />
+                </div>
+
+                {/* Gamma */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">Gamma</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-gamma-sn">{wellData.gammaSNOverride || wellData.gammaSN || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.gammaSNOverride || ""}
+                    onChange={(e) => setOverrides({ ...overrides, gammaSNOverride: e.target.value })}
+                    className="w-32"
+                    data-testid="input-gamma-override"
+                  />
+                </div>
+
+                {/* Directional */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">Directional</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-dir-sn">{wellData.directionalSNOverride || wellData.directionalSN || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.directionalSNOverride || ""}
+                    onChange={(e) => setOverrides({ ...overrides, directionalSNOverride: e.target.value })}
+                    className="w-32"
+                    data-testid="input-dir-override"
+                  />
+                </div>
+
+                {/* Battery 1 */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">Battery 1</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-battery-sn">{wellData.batterySNOverride || wellData.batterySN || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.batterySNOverride || ""}
+                    onChange={(e) => setOverrides({ ...overrides, batterySNOverride: e.target.value })}
+                    className="w-32"
+                    data-testid="input-battery-override"
+                  />
+                </div>
+
+                {/* Battery 2 */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">Battery 2</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-battery2-sn">{wellData.batterySN2Override || wellData.batterySN2 || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.batterySN2Override || ""}
+                    onChange={(e) => setOverrides({ ...overrides, batterySN2Override: e.target.value })}
+                    className="w-32"
+                    data-testid="input-battery2-override"
+                  />
+                </div>
+
+                {/* Battery 3 */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">Battery 3</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-battery3-sn">{wellData.battery3Override || wellData.battery3 || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.battery3Override || ""}
+                    onChange={(e) => setOverrides({ ...overrides, battery3Override: e.target.value })}
+                    className="w-32"
+                    data-testid="input-battery3-override"
+                  />
+                </div>
+
+                {/* Shock Tool */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">Shock Tool</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-shock-sn">{wellData.shockToolSNOverride || wellData.shockToolSN || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.shockToolSNOverride || ""}
+                    onChange={(e) => setOverrides({ ...overrides, shockToolSNOverride: e.target.value })}
+                    className="w-32"
+                    data-testid="input-shock-override"
+                  />
+                </div>
+
+                {/* Babelfish */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">Babelfish</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-babelfish-sn">{wellData.babelfishSNOverride || wellData.babelfishSN || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.babelfishSNOverride || ""}
+                    onChange={(e) => setOverrides({ ...overrides, babelfishSNOverride: e.target.value })}
+                    className="w-32"
+                    data-testid="input-babelfish-override"
+                  />
+                </div>
+
+                {/* MuleShoe */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium w-28">MuleShoe</Label>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-muleshoe-sn">{wellData.muleShoeOverride || wellData.muleShoe || "N/A"}</div>
+                  <Input
+                    placeholder="N/N"
+                    value={overrides.muleShoeOverride || ""}
+                    onChange={(e) => setOverrides({ ...overrides, muleShoeOverride: e.target.value })}
+                    className="w-32"
+                    data-testid="input-muleshoe-override"
+                  />
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

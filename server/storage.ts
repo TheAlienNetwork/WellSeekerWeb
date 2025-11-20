@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Well, type WellDetails, type BHAComponent, type DrillingParameters, type ToolComponent, type WellDashboardData } from "@shared/schema";
+import { type User, type InsertUser, type Well, type WellDetails, type BHAComponent, type DrillingParameters, type ToolComponent, type WellDashboardData, type BHARun, type ComponentReportData } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -12,16 +12,34 @@ export interface IStorage {
   clearWellSeekerToken(): Promise<void>;
   
   // Well Dashboard Data
-  getWellDashboardData(): Promise<WellDashboardData>;
+  getBHARuns(wellId: string): Promise<BHARun[]>;
+  getWellDashboardData(wellId: string, runId: string): Promise<WellDashboardData>;
+  updateWellDashboardOverrides(wellId: string, runId: string, overrides: Partial<WellDashboardData>): Promise<void>;
+  getComponentReportData(wellId: string, runId: string, componentType: string): Promise<ComponentReportData>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private wellSeekerToken: string | undefined;
+  private bhaRuns: Map<string, BHARun[]>;
+  private wellDashboards: Map<string, WellDashboardData>;
 
   constructor() {
     this.users = new Map();
     this.wellSeekerToken = undefined;
+    this.bhaRuns = new Map();
+    this.wellDashboards = new Map();
+    this.initializeMockData();
+  }
+  
+  private initializeMockData() {
+    // Initialize mock BHA runs for test well
+    const testWellId = "10";
+    this.bhaRuns.set(testWellId, [
+      { id: "run-1", runNumber: 1, bhaNumber: 1, mwdNumber: 0, wellId: testWellId },
+      { id: "run-2", runNumber: 2, bhaNumber: 2, mwdNumber: 1, wellId: testWellId },
+      { id: "run-3", runNumber: 3, bhaNumber: 3, mwdNumber: 2, wellId: testWellId },
+    ]);
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -53,8 +71,21 @@ export class MemStorage implements IStorage {
     this.wellSeekerToken = undefined;
   }
 
-  async getWellDashboardData(): Promise<WellDashboardData> {
+  async getBHARuns(wellId: string): Promise<BHARun[]> {
+    return this.bhaRuns.get(wellId) || [];
+  }
+
+  async getWellDashboardData(wellId: string, runId: string): Promise<WellDashboardData> {
+    const key = `${wellId}-${runId}`;
+    const cached = this.wellDashboards.get(key);
+    if (cached) {
+      return cached;
+    }
+    
+    // Return mock data for now
     return {
+      wellId,
+      runId,
       operator: "Continental Resources",
       rig: "Nabors 784",
       well: "Limousin 6-3H2",
@@ -136,6 +167,28 @@ export class MemStorage implements IStorage {
       correctingMDG: "",
       battery3: "0",
       babelfishSN: "0",
+      muleShoe: "MS12345",
+    };
+  }
+
+  async updateWellDashboardOverrides(wellId: string, runId: string, overrides: Partial<WellDashboardData>): Promise<void> {
+    const key = `${wellId}-${runId}`;
+    const existing = await this.getWellDashboardData(wellId, runId);
+    this.wellDashboards.set(key, { ...existing, ...overrides });
+  }
+
+  async getComponentReportData(wellId: string, runId: string, componentType: string): Promise<ComponentReportData> {
+    const dashboardData = await this.getWellDashboardData(wellId, runId);
+    
+    return {
+      dateOfActivity: new Date().toLocaleDateString(),
+      drivrNumber: "", // To be filled by user
+      projectJobNum: dashboardData.jobNumber,
+      runNum: dashboardData.bhaNumber,
+      circulatingHours: dashboardData.circHrs,
+      edt: dashboardData.drillingHrs + dashboardData.circHrs,
+      personUpdatingActivity: "", // Will be extracted from email
+      comments: dashboardData.mwdComments,
     };
   }
 }
