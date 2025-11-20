@@ -1,33 +1,48 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSearch, useLocation } from "wouter";
+import type { Well } from "@shared/schema";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { 
   FileSpreadsheet, 
   Download,
-  Battery,
-  Zap,
   Activity,
+  Shield,
   RadioTower,
-  Shield
+  Zap,
+  Battery,
+  Loader2,
+  AlertCircle
 } from "lucide-react";
-import { api } from "@/lib/api";
-import type { BHARun } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import type { ComponentReportData } from "@shared/schema";
 import * as XLSX from "xlsx";
 
-export default function ReportsPage() {
+interface ReportsPageProps {
+  selectedWell: Well | null;
+}
+
+export default function ReportsPage({ selectedWell }: ReportsPageProps) {
+  const searchParams = new URLSearchParams(useSearch());
+  const wellId = searchParams.get("wellId") || selectedWell?.id;
+  const runId = searchParams.get("runId") || "run-1";
+  const [generatingReport, setGeneratingReport] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [selectedWellId, setSelectedWellId] = useState<string>("");
-  const [selectedRunId, setSelectedRunId] = useState<string>("");
+
+  if (!wellId) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-lg font-semibold mb-2">No Well Selected</p>
+          <p className="text-sm text-muted-foreground mb-4">Please select a well to generate reports</p>
+          <Button onClick={() => setLocation("/wells")}>Go to Wells</Button>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch wells list
   const { data: wells } = useQuery<any[]>({
@@ -36,20 +51,20 @@ export default function ReportsPage() {
 
   // Fetch BHA runs for selected well
   const { data: bhaRuns } = useQuery<BHARun[]>({
-    queryKey: ["/api/bha-runs", selectedWellId],
+    queryKey: ["/api/bha-runs", wellId],
     queryFn: async () => {
-      if (!selectedWellId || selectedWellId.trim() === "") throw new Error("Invalid well ID");
-      const response = await fetch(`/api/bha-runs/${selectedWellId}`, { credentials: "include" });
+      if (!wellId || wellId.trim() === "") throw new Error("Invalid well ID");
+      const response = await fetch(`/api/bha-runs/${wellId}`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch BHA runs");
       return response.json();
     },
-    enabled: !!selectedWellId && selectedWellId.trim() !== "",
+    enabled: !!wellId && wellId.trim() !== "",
   });
 
   // Generate Excel file for a component
   const generateExcel = async (componentType: string) => {
     // Validate IDs are non-empty strings
-    if (!selectedWellId || selectedWellId.trim() === "" || !selectedRunId || selectedRunId.trim() === "") {
+    if (!wellId || wellId.trim() === "" || !runId || runId.trim() === "") {
       toast({
         variant: "destructive",
         title: "Error",
@@ -58,10 +73,12 @@ export default function ReportsPage() {
       return;
     }
 
+    setGeneratingReport(componentType);
+
     try {
       // Fetch component report data
       const response = await fetch(
-        `/api/component-report/${selectedWellId}/${selectedRunId}/${componentType}`,
+        `/api/component-report/${wellId}/${runId}/${componentType}`,
         { credentials: "include" }
       );
 
@@ -73,7 +90,7 @@ export default function ReportsPage() {
 
       // Create Excel workbook
       const workbook = XLSX.utils.book_new();
-      
+
       // Define column headers based on the image
       const headers = [
         "DATE OF ACTIVITY",
@@ -131,6 +148,8 @@ export default function ReportsPage() {
         title: "Export failed",
         description: error instanceof Error ? error.message : "Unknown error",
       });
+    } finally {
+      setGeneratingReport(null);
     }
   };
 
@@ -167,7 +186,10 @@ export default function ReportsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="well-select">Well</Label>
-                <Select value={selectedWellId} onValueChange={setSelectedWellId}>
+                <Select value={wellId} onValueChange={(value) => {
+                  setSelectedWellId(value);
+                  setLocation(`/reports?wellId=${value}`);
+                }}>
                   <SelectTrigger id="well-select" data-testid="select-well">
                     <SelectValue placeholder="Select well" />
                   </SelectTrigger>
@@ -184,9 +206,12 @@ export default function ReportsPage() {
               <div className="space-y-2">
                 <Label htmlFor="run-select">Run #</Label>
                 <Select 
-                  value={selectedRunId} 
-                  onValueChange={setSelectedRunId}
-                  disabled={!selectedWellId}
+                  value={runId} 
+                  onValueChange={(value) => {
+                    setSelectedRunId(value);
+                    setLocation(`/reports?wellId=${wellId}&runId=${value}`);
+                  }}
+                  disabled={!wellId}
                 >
                   <SelectTrigger id="run-select" data-testid="select-run">
                     <SelectValue placeholder="Select run" />
@@ -222,12 +247,20 @@ export default function ReportsPage() {
                     onClick={() => generateExcel(component.type)}
                     variant="outline"
                     className="h-auto py-4 flex flex-col items-center gap-2"
-                    disabled={!selectedWellId || !selectedRunId}
+                    disabled={!wellId || !runId || generatingReport !== null}
                     data-testid={`button-export-${component.type}`}
                   >
-                    <Icon className="w-6 h-6" />
+                    {generatingReport === component.type ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <Icon className="w-6 h-6" />
+                    )}
                     <span className="text-sm">{component.name}</span>
-                    <Download className="w-3 h-3 text-muted-foreground" />
+                    {generatingReport === component.type ? (
+                      <span>Exporting...</span>
+                    ) : (
+                      <Download className="w-3 h-3 text-muted-foreground" />
+                    )}
                   </Button>
                 );
               })}
