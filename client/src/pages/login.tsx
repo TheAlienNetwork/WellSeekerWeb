@@ -11,13 +11,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleLogin = async (email: string, password: string) => {
+  const handleLogin = async (email: string, password: string, productKey: string) => {
     setIsLoading(true);
     try {
-      const result = await api.auth.login(email, password);
+      const result = await api.auth.login(email, password, productKey);
       toast({
         title: "Login successful",
-        description: `Welcome back, ${result.email}`,
+        description: `Welcome to Well Seeker Pro, ${result.email}`,
       });
       onLogin(result.email);
     } catch (error) {
