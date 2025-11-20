@@ -60,12 +60,12 @@ The application authenticates with the Well Seeker Pro API and caches access tok
 
 The application connects to these Well Seeker Pro API endpoints:
 - `POST /api/authToken` - Authentication
-- `GET /api/wellList` - List of wells
-- `GET /api/wellDetails/{wellId}` - Well details
-- `GET /api/wells/{wellId}/bha/{bhaNumber}` - BHA components
-- `GET /api/wells/{wellId}/bhaRuns` - Available BHA runs
-- `GET /api/wells/{wellId}/drillingParameters` - Drilling parameters
-- `GET /api/wells/{wellId}/toolComponents` - Tool components
+- `GET /api/jobList` - List of wells/jobs
+- `GET /api/job/{jobNum}` - Well/job details
+- `GET /api/bha/{jobNum}/{runNum}` - BHA components for a specific run
+- `GET /api/runList/{jobNum}` - Available BHA runs for a job
+- `GET /api/run/{jobNum}/{runNum}` - Drilling parameters for a specific run
+- `GET /api/toolComponents/{jobNum}/{runNum}` - Tool components for a specific run
 
 ### Configuration
 

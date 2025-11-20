@@ -188,12 +188,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const wellsData = await callWellSeekerAPI<any[]>(req, "wellList");
+      const wellsData = await callWellSeekerAPI<any[]>(req, "jobList");
       
       // Transform Well Seeker Pro API response to our Well format
       const wells: Well[] = wellsData.map((well, index) => ({
-        id: well.jobNumber || String(index + 1),
-        jobNum: well.jobNumber || '',
+        id: well.jobNum || String(index + 1),
+        jobNum: well.jobNum || '',
         actualWell: well.actualWell || well.wellName || '',
         rig: well.rig || '',
         operator: well.operator || '',
@@ -215,22 +215,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId } = req.params;
 
-      const wellData = await callWellSeekerAPI<any>(req, `wellDetails/${wellId}`);
+      const wellData = await callWellSeekerAPI<any>(req, `job/${wellId}`);
       
       // Transform Well Seeker Pro API response to our WellDetails format
       const wellDetails: WellDetails = {
-        wellName: wellData.wellName || wellData.actualWell || '',
-        jobNumber: wellData.jobNumber || wellId,
+        wellName: wellData.actualWell || wellData.wellName || '',
+        jobNumber: wellData.jobNum || wellId,
         operator: wellData.operator || '',
         rig: wellData.rig || '',
-        latitude: wellData.latitude || wellData.lat || '',
-        longitude: wellData.longitude || wellData.lon || '',
+        latitude: wellData.lat || wellData.latitude || '',
+        longitude: wellData.lon || wellData.longitude || '',
         depthIn: wellData.depthIn || '',
         depthOut: wellData.depthOut || '',
         totalFootage: wellData.totalFootage || '',
-        magCorrection: wellData.magCorrection || wellData.magCorr || '',
+        magCorrection: wellData.magCorr || wellData.magCorrection || '',
         gridConv: wellData.gridConv || wellData.gridConvergence || '',
-        btotal: wellData.btotal || wellData.bTotal || '',
+        btotal: wellData.bTotal || wellData.btotal || '',
         vs: wellData.vs || '',
         dec: wellData.dec || wellData.declination || '',
         dip: wellData.dip || ''
@@ -251,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId, bhaNumber } = req.params;
 
-      const bhaData = await callWellSeekerAPI<any[]>(req, `wells/${wellId}/bha/${bhaNumber}`);
+      const bhaData = await callWellSeekerAPI<any[]>(req, `bha/${wellId}/${bhaNumber}`);
       
       // Transform Well Seeker Pro API response to our BHAComponent format
       const bhaComponents: BHAComponent[] = bhaData.map((component, index) => ({
@@ -279,8 +279,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { wellId } = req.params;
+      const { runNum } = req.query;
 
-      const paramsData = await callWellSeekerAPI<any>(req, `wells/${wellId}/drillingParameters`);
+      // For drilling parameters, we need a run number - default to latest run
+      const runNumber = runNum || '0';
+      const paramsData = await callWellSeekerAPI<any>(req, `run/${wellId}/${runNumber}`);
       
       // Transform Well Seeker Pro API response to our DrillingParameters format
       const parameters: DrillingParameters = {
@@ -316,10 +319,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId } = req.params;
 
-      const bhaRunsData = await callWellSeekerAPI<any[]>(req, `wells/${wellId}/bhaRuns`);
+      const bhaRunsData = await callWellSeekerAPI<any[]>(req, `runList/${wellId}`);
       
       // Transform to array of BHA run numbers
-      const bhaRuns = bhaRunsData.map((run, index) => run.bhaNumber || run.runNumber || index);
+      const bhaRuns = bhaRunsData.map((run, index) => run.runNum || run.bhaNumber || run.runNumber || index);
 
       res.json(bhaRuns);
     } catch (error) {
@@ -336,8 +339,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { wellId } = req.params;
+      const { runNum } = req.query;
 
-      const componentsData = await callWellSeekerAPI<any[]>(req, `wells/${wellId}/toolComponents`);
+      // Tool components require a run number - default to latest run
+      const runNumber = runNum || '0';
+      const componentsData = await callWellSeekerAPI<any[]>(req, `toolComponents/${wellId}/${runNumber}`);
       
       // Transform Well Seeker Pro API response to our ToolComponent format
       const components: ToolComponent[] = componentsData.map(component => ({
