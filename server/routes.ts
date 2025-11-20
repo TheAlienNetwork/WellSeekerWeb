@@ -170,8 +170,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      // Use the correct endpoint from API documentation
-      const wellsData = await callWellSeekerAPI<any[]>(req, "JobList");
+      // Use the correct endpoint from API documentation  
+      const wellsData = await callWellSeekerAPI<any[]>(req, "well/jobList");
 
       // Transform Well Seeker Pro API response to our Well format
       const wells: Well[] = wellsData.map((well, index) => ({
