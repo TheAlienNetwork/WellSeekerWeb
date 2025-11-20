@@ -15,6 +15,7 @@ declare module 'express-session' {
       productKey: string;
     };
     wellSeekerToken?: string;
+    wellSeekerRefreshToken?: string;
   }
 }
 
@@ -167,6 +168,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       req.session.wellSeekerToken = authData.access_token;
 
+      // Store refresh token if available
+      if (authData.refresh_token) {
+        req.session.wellSeekerRefreshToken = authData.refresh_token;
+        console.log("Stored new refresh token in session from login");
+      }
+
       res.json({ success: true, email });
     } catch (error) {
       console.error("Login error:", error);
@@ -207,6 +214,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const authData: WellSeekerAuthResponse = await authResponse.json();
       req.session.wellSeekerToken = authData.access_token;
+      
+      // Store new refresh token if provided
+      if (authData.refresh_token) {
+        req.session.wellSeekerRefreshToken = authData.refresh_token;
+        console.log("Updated refresh token in session");
+      }
 
       console.log("Token refreshed successfully for:", userName);
 
@@ -378,6 +391,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const authResponse: WellSeekerAuthResponse = await refreshResponse.json();
               const newToken = authResponse.access_token;
               req.session.wellSeekerToken = newToken;
+              
+              // Store new refresh token if provided
+              if (authResponse.refresh_token) {
+                req.session.wellSeekerRefreshToken = authResponse.refresh_token;
+                console.log("Updated refresh token in session");
+              }
+              
               console.log("Token refreshed successfully, retrying wells request...");
               console.log(`New token starts with: ${newToken.substring(0, 20)}...`);
 
