@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import LoginPage from "@/pages/login";
 import WellsPage from "@/pages/wells";
 import WellDetailsPage from "@/pages/well-details";
+import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 import type { Well } from "@/components/WellListTable";
 import { api } from "@/lib/api";
@@ -42,7 +43,7 @@ function Router() {
   const handleLogin = (email: string) => {
     setUserEmail(email);
     setIsAuthenticated(true);
-    setLocation("/wells");
+    setLocation("/dashboard");
   };
 
   const handleLogout = async () => {
@@ -65,7 +66,8 @@ function Router() {
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
-    if (page === "wells") setLocation("/wells");
+    if (page === "dashboard") setLocation("/dashboard");
+    else if (page === "wells") setLocation("/wells");
     else if (page === "details") setLocation("/well-details");
     else setLocation(`/${page}`);
   };
@@ -101,8 +103,11 @@ function Router() {
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <ThemeToggle />
           </header>
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-hidden">
             <Switch>
+              <Route path="/dashboard">
+                <Dashboard />
+              </Route>
               <Route path="/wells">
                 <WellsPage onSelectWell={handleSelectWell} />
               </Route>
@@ -110,13 +115,13 @@ function Router() {
                 <WellDetailsPage selectedWellId={selectedWellId} />
               </Route>
               <Route path="/reports">
-                <div className="space-y-4">
+                <div className="space-y-4 p-6">
                   <h1 className="text-2xl font-semibold">Reports</h1>
                   <p className="text-muted-foreground">Report generation coming soon</p>
                 </div>
               </Route>
               <Route path="/settings">
-                <div className="space-y-4">
+                <div className="space-y-4 p-6">
                   <h1 className="text-2xl font-semibold">Settings</h1>
                   <p className="text-muted-foreground">Application settings coming soon</p>
                 </div>
