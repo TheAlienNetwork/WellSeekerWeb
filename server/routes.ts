@@ -171,36 +171,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Call wells endpoint with POST method and required parameters
-      const token = await getWellSeekerToken(req);
+      let token = await getWellSeekerToken(req);
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
       
       console.log(`Calling Wells API with token starting with: ${token.substring(0, 20)}...`);
+      console.log(`Token length: ${token.length} characters`);
       
-      const response = await fetch("https://www.icpwebportal.com/api/wells", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          userName: req.session.userEmail || '',
-          productKey: productKey,
-          getFootage: 'true',
-          databaseOrg: ''
-        }).toString(),
-      });
+      const makeWellsRequest = async (authToken: string) => {
+        return await fetch("https://www.icpwebportal.com/api/wells", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${authToken}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            userName: req.session.userEmail || '',
+            productKey: productKey,
+            getFootage: 'true',
+            databaseOrg: ''
+          }).toString(),
+        });
+      };
+
+      let response = await makeWellsRequest(token);
 
       console.log(`Wells API Response Status: ${response.status} ${response.statusText}`);
       console.log(`Response Headers:`, Object.fromEntries(response.headers.entries()));
 
+      // If 401, try to refresh token
       if (response.status === 401) {
-        const errorBody = await response.text();
-        console.error(`Wells API 401 Error Response Body: ${errorBody}`);
-        console.error(`Token used (first 30 chars): ${token.substring(0, 30)}...`);
-        console.error(`Token length: ${token.length}`);
-        console.error(`UserName sent: ${req.session.userEmail}`);
-        console.error(`ProductKey sent: ${productKey}`);
-        throw new Error(`Authentication failed: The WELLSEEKER_ACCESS_TOKEN is invalid or expired. Please update it in Secrets. Error details: ${errorBody}`);
+        const refreshToken = process.env.WELLSEEKER_REFRESH_TOKEN;
+        if (refreshToken) {
+          console.log("Access token expired, attempting to refresh...");
+          try {
+            const refreshResponse = await fetch("https://www.icpwebportal.com/api/authToken/refresh", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+
+            if (refreshResponse.ok) {
+              const authResponse: WellSeekerAuthResponse = await refreshResponse.json();
+              token = authResponse.access_token;
+              req.session.wellSeekerToken = authResponse.access_token;
+              console.log("Token refreshed successfully, retrying wells request...");
+
+              // Retry with new token
+              response = await makeWellsRequest(token);
+              
+              if (response.ok) {
+                console.log("Wells request succeeded with refreshed token");
+              }
+            } else {
+              const refreshError = await refreshResponse.text();
+              console.error(`Token refresh failed: ${refreshResponse.status} - ${refreshError}`);
+            }
+          } catch (refreshError) {
+            console.error("Token refresh failed:", refreshError);
+          }
+        } else {
+          console.error("No WELLSEEKER_REFRESH_TOKEN found in Secrets");
+        }
+        
+        // If still 401 after refresh attempt
+        if (response.status === 401) {
+          const errorBody = await response.text();
+          console.error(`Wells API 401 Error Response Body: ${errorBody}`);
+          console.error(`Token used (first 30 chars): ${token.substring(0, 30)}...`);
+          console.error(`UserName sent: ${req.session.userEmail}`);
+          console.error(`ProductKey sent: ${productKey}`);
+          throw new Error(`Authentication failed: The WELLSEEKER_ACCESS_TOKEN is invalid or expired. Please update it in Secrets. Error details: ${errorBody}`);
+        }
       }
 
       if (!response.ok) {
