@@ -387,9 +387,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }).toString(),
             });
 
+            console.log(`Refresh response status: ${refreshResponse.status}`);
+
             if (refreshResponse.ok) {
               const authResponse: WellSeekerAuthResponse = await refreshResponse.json();
+              console.log("Auth response received:", { 
+                has_access_token: !!authResponse.access_token,
+                has_refresh_token: !!authResponse.refresh_token,
+                token_length: authResponse.access_token?.length 
+              });
+              
               const newToken = authResponse.access_token;
+              
+              if (!newToken) {
+                console.error("No access token in refresh response!");
+                throw new Error("Failed to get new access token");
+              }
+              
               req.session.wellSeekerToken = newToken;
               
               // Store new refresh token if provided
@@ -400,6 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               console.log("Token refreshed successfully, retrying wells request...");
               console.log(`New token starts with: ${newToken.substring(0, 20)}...`);
+              console.log(`New token length: ${newToken.length} characters`);
 
               // Retry with new token
               response = await makeWellsRequest(newToken);
