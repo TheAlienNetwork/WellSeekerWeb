@@ -19,7 +19,10 @@ import { useToast } from "@/hooks/use-toast";
 
 function App() {
   const [user, setUser] = useState<string | null>(null);
-  const [, setLocation] = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [currentPage, setCurrentPage] = useState("dashboard");
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedWell, setSelectedWell] = useState<Well | null>(null);
 
@@ -33,13 +36,16 @@ function App() {
       } catch (error) {
         setUser(null);
         setIsAuthenticated(false);
+        if (location !== "/") {
+          setLocation("/");
+        }
       } finally {
         setIsCheckingAuth(false);
       }
     };
 
     checkAuth();
-  }, []);
+  }, [location, setLocation]); // Added location and setLocation to dependency array as they are used inside
 
   // Setup global error handler for token expiration
   useEffect(() => {
@@ -79,19 +85,28 @@ function App() {
   const handleLogin = (email: string) => {
     setUser(email);
     setIsAuthenticated(true);
-    setCurrentPage("dashboard");
-    setLocation("/dashboard");
+    setCurrentPage("wells");
+    setLocation("/wells");
   };
 
   const handleLogout = async () => {
     try {
       await api.auth.logout();
       setIsAuthenticated(false);
-      setUser("");
+      setUser(null); // Changed from "" to null to match the initial state type
       setSelectedWell(null);
       setLocation("/");
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
     } catch (error) {
       console.error("Logout error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to log out",
+      });
     }
   };
 
@@ -106,6 +121,7 @@ function App() {
     if (page === "dashboard") setLocation("/dashboard");
     else if (page === "wells") setLocation("/wells");
     else if (page === "details") setLocation("/well-details");
+    else if (page === "reports") setLocation("/reports");
     else setLocation(`/${page}`);
   };
 
@@ -118,6 +134,7 @@ function App() {
   }
 
   if (!isAuthenticated) {
+    // Use the onLogin prop as defined in the original App component, not onLoginSuccess
     return <LoginPage onLogin={handleLogin} />;
   }
 
@@ -140,7 +157,7 @@ function App() {
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <ThemeToggle />
           </header>
-          <main className="flex-1 overflow-hidden">
+          <main className="flex-1 overflow-auto">
             <Switch>
               <Route path="/dashboard">
                 <Dashboard selectedWell={selectedWell} />
@@ -168,106 +185,5 @@ function App() {
     </SidebarProvider>
   );
 }
-
-
-function Router() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [location, setLocation] = useLocation();
-  const { toast } = useToast();
-  const [selectedWell, setSelectedWell] = useState<Well | null>(null);
-
-
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        await api.auth.me();
-        setIsAuthenticated(true);
-      } catch (error) {
-        setIsAuthenticated(false);
-        if (location !== "/login") {
-          setLocation("/login");
-        }
-      } finally {
-        setIsCheckingAuth(false);
-      }
-    }
-
-    checkAuth();
-  }, [location, setLocation]);
-
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-    setLocation("/wells");
-  };
-
-  const handleLogout = async () => {
-    try {
-      await api.auth.logout();
-      setIsAuthenticated(false);
-      setSelectedWell(null);
-      setLocation("/login");
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to log out",
-      });
-    }
-  };
-
-  if (isCheckingAuth) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-
-  if (!isAuthenticated && location !== "/login") {
-    return <LoginPage onLoginSuccess={handleLogin} />;
-  }
-
-  return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full bg-background">
-        <AppSidebar onLogout={handleLogout} />
-        <main className="flex-1 overflow-hidden">
-          <div className="flex items-center gap-2 border-b px-4 py-3">
-            <SidebarTrigger />
-            <div className="flex-1" />
-            <ThemeToggle />
-          </div>
-          <div className="h-[calc(100vh-57px)] overflow-auto">
-            <Switch>
-              <Route path="/login">
-                <LoginPage onLoginSuccess={handleLogin} />
-              </Route>
-              <Route path="/wells">
-                <WellsPage onSelectWell={(well) => {
-                  setSelectedWell(well);
-                  setLocation(`/dashboard?wellId=${well.id}`);
-                }} />
-              </Route>
-              <Route path="/well-details">
-                <WellDetailsPage />
-              </Route>
-              <Route path="/dashboard">
-                <Dashboard selectedWell={selectedWell} />
-              </Route>
-              <Route path="/reports">
-                <ReportsPage selectedWell={selectedWell} />
-              </Route>
-              <Route>
-                <NotFound />
-              </Route>
-            </Switch>
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
-  );
-}
-
 
 export default App;
