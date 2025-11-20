@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table";
 
 export default function Dashboard() {
-  const { data: wellData, isLoading } = useQuery<WellDashboardData>({
+  const { data: wellData, isLoading, error } = useQuery<WellDashboardData>({
     queryKey: ["/api/dashboard/well-data"],
   });
 
@@ -33,6 +33,18 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center h-full" data-testid="loading-dashboard">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <XCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <p className="text-lg font-semibold mb-2">Failed to load dashboard data</p>
+          <p className="text-sm text-muted-foreground">{error instanceof Error ? error.message : 'Unknown error'}</p>
+        </div>
       </div>
     );
   }

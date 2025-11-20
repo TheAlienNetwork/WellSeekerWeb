@@ -43,6 +43,7 @@ function Router() {
   const handleLogin = (email: string) => {
     setUserEmail(email);
     setIsAuthenticated(true);
+    setCurrentPage("dashboard");
     setLocation("/dashboard");
   };
 
