@@ -15,7 +15,6 @@ declare module 'express-session' {
       productKey: string;
     };
     wellSeekerToken?: string;
-    wellSeekerRefreshToken?: string;
   }
 }
 
@@ -55,7 +54,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function callWellSeekerAPI<T>(req: any, endpoint: string): Promise<T> {
     const token = await getWellSeekerToken(req);
     const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
-
+    
     // Add productKey query parameter
     const separator = endpoint.includes('?') ? '&' : '?';
     const apiUrl = `https://www.icpwebportal.com/api/${endpoint}${separator}productKey=${productKey}`;
@@ -133,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Authenticate with Well Seeker Pro API to get fresh tokens
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
-
+      
       console.log("Attempting to authenticate with Well Seeker Pro API for:", email);
 
       const authResponse = await fetch("https://www.icpwebportal.com/api/authToken", {
@@ -155,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const authData: WellSeekerAuthResponse = await authResponse.json();
-
+      
       console.log("Authentication successful for:", email);
 
       // Store credentials and tokens in session
@@ -167,12 +166,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         productKey: productKey
       };
       req.session.wellSeekerToken = authData.access_token;
-
-      // Store refresh token if available
-      if (authData.refresh_token) {
-        req.session.wellSeekerRefreshToken = authData.refresh_token;
-        console.log("Stored new refresh token in session from login");
-      }
 
       res.json({ success: true, email });
     } catch (error) {
@@ -214,12 +207,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const authData: WellSeekerAuthResponse = await authResponse.json();
       req.session.wellSeekerToken = authData.access_token;
-
-      // Store new refresh token if provided
-      if (authData.refresh_token) {
-        req.session.wellSeekerRefreshToken = authData.refresh_token;
-        console.log("Updated refresh token in session");
-      }
 
       console.log("Token refreshed successfully for:", userName);
 
@@ -271,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { wellId, runId } = req.query;
-
+      
       if (!wellId || !runId) {
         return res.status(400).json({ error: "wellId and runId are required" });
       }
@@ -292,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { wellId, runId, overrides } = req.body;
-
+      
       if (!wellId || !runId || !overrides) {
         return res.status(400).json({ error: "wellId, runId, and overrides are required" });
       }
@@ -314,12 +301,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId, runId, componentType } = req.params;
       const userEmail = req.session.userEmail || "";
-
+      
       // Extract username from email (first part before period)
       const username = userEmail.split('@')[0].split('.')[0];
 
       const reportData = await storage.getComponentReportData(wellId, runId, componentType);
-
+      
       // Add username to report data
       const finalData = {
         ...reportData,
@@ -340,16 +327,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 100;
-      const search = (req.query.search as string) || '';
-
       // Call wells endpoint with POST method and required parameters
       let token = await getWellSeekerToken(req);
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
-
-      console.log(`Calling Wells API (page ${page}, limit ${limit})...`);
-
+      
+      console.log(`Calling Wells API with token starting with: ${token.substring(0, 20)}...`);
+      console.log(`Token length: ${token.length} characters`);
+      
       const makeWellsRequest = async (authToken: string) => {
         return await fetch("https://www.icpwebportal.com/api/wells", {
           method: "POST",
@@ -377,7 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Access token expired, attempting to refresh with saved credentials...");
           try {
             const { userName, password, productKey: credProductKey } = req.session.wellSeekerCredentials;
-
+            
             const refreshResponse = await fetch("https://www.icpwebportal.com/api/authToken", {
               method: "POST",
               headers: {
@@ -390,57 +374,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }).toString(),
             });
 
-            console.log(`Refresh response status: ${refreshResponse.status}`);
-
             if (refreshResponse.ok) {
               const authResponse: WellSeekerAuthResponse = await refreshResponse.json();
-              console.log("Auth response structure:", {
-                has_access_token: !!authResponse.access_token,
-                access_token_length: authResponse.access_token?.length,
-                has_refresh_token: !!authResponse.refresh_token,
-                response_keys: Object.keys(authResponse)
-              });
-
-              // Check if the response contains an error (invalid credentials)
-              if (authResponse.error === "invalid_grant" || !authResponse.access_token) {
-                console.error("Invalid credentials - clearing session and forcing re-login");
-                req.session.destroy(() => {});
-                throw new Error("TOKEN_EXPIRED: Your session has expired. Please log in again.");
-              }
-
-              const newToken = authResponse.access_token;
-
-              req.session.wellSeekerToken = newToken;
-
-              // Store new refresh token if provided
-              if (authResponse.refresh_token) {
-                req.session.wellSeekerRefreshToken = authResponse.refresh_token;
-                console.log("Updated refresh token in session");
-              }
-
+              token = authResponse.access_token;
+              req.session.wellSeekerToken = authResponse.access_token;
               console.log("Token refreshed successfully, retrying wells request...");
-              console.log(`New token starts with: ${newToken.substring(0, 20)}...`);
-              console.log(`New token length: ${newToken.length} characters`);
 
               // Retry with new token
-              response = await makeWellsRequest(newToken);
-
+              response = await makeWellsRequest(token);
+              
               if (response.ok) {
                 console.log("Wells request succeeded with refreshed token");
-              } else {
-                console.error(`Wells request still failed after token refresh: ${response.status}`);
               }
             } else {
               const refreshError = await refreshResponse.text();
               console.error(`Token refresh failed: ${refreshResponse.status} - ${refreshError}`);
-              // Clear session on failed refresh
-              req.session.destroy(() => {});
             }
           } catch (refreshError) {
             console.error("Token refresh failed:", refreshError);
           }
         }
-
+        
         // If still 401 after refresh attempt
         if (response.status === 401) {
           const errorBody = await response.text();
@@ -456,9 +410,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const wellsData = await response.json();
+      console.log(`Wells API Response Data:`, JSON.stringify(wellsData).substring(0, 200) + '...');
 
       // Transform Well Seeker Pro API response to our Well format
-      let wells: Well[] = Array.isArray(wellsData) ? wellsData.map((well, index) => ({
+      const wells: Well[] = Array.isArray(wellsData) ? wellsData.map((well, index) => ({
         id: well.id ? String(well.id) : (well.jobNum ? `job-${well.jobNum}-${index}` : `well-${index}`),
         jobNum: well.jobNum || '',
         actualWell: well.actualWell || well.wellName || '',
@@ -467,34 +422,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         wellStatus: well.wellStatus || 'N/A',
       })) : [];
 
-      // Apply search filter if provided
-      if (search) {
-        const searchLower = search.toLowerCase();
-        wells = wells.filter(well => 
-          well.actualWell.toLowerCase().includes(searchLower) ||
-          well.jobNum.toLowerCase().includes(searchLower) ||
-          well.operator.toLowerCase().includes(searchLower) ||
-          well.rig.toLowerCase().includes(searchLower)
-        );
-      }
-
-      // Calculate pagination
-      const total = wells.length;
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedWells = wells.slice(startIndex, endIndex);
-
-      console.log(`Successfully fetched ${total} wells, returning page ${page} (${paginatedWells.length} items)`);
-      
-      res.json({
-        wells: paginatedWells,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit)
-        }
-      });
+      console.log(`Successfully fetched ${wells.length} wells`);
+      res.json(wells);
     } catch (error) {
       console.error("Error fetching wells:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -509,10 +438,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { wellId } = req.params;
+
       // Get the well details to find the actualWell name
       const token = await getWellSeekerToken(req);
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
-
+      
       const wellsResponse = await fetch("https://www.icpwebportal.com/api/wells", {
         method: "POST",
         headers: {
@@ -599,7 +529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // First get the well details to find the actualWell name
       const token = await getWellSeekerToken(req);
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
-
+      
       // Get wells list to find the actualWell name for this wellId
       const wellsResponse = await fetch("https://www.icpwebportal.com/api/wells", {
         method: "POST",
@@ -685,7 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the well details to find the actualWell name
       const token = await getWellSeekerToken(req);
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
-
+      
       const wellsResponse = await fetch("https://www.icpwebportal.com/api/wells", {
         method: "POST",
         headers: {
@@ -734,7 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const headersData = await headersResponse.json();
-
+      
       // Find the specific BHA header or use the first one
       const bhaHeader = Array.isArray(headersData) 
         ? headersData.find(h => String(h.bhaNum || h.bha) === bhaNumber) || headersData[0]
@@ -777,7 +707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the well details to find the actualWell name
       const token = await getWellSeekerToken(req);
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
-
+      
       const wellsResponse = await fetch("https://www.icpwebportal.com/api/wells", {
         method: "POST",
         headers: {
@@ -852,7 +782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the well details to find the actualWell name
       const token = await getWellSeekerToken(req);
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
-
+      
       const wellsResponse = await fetch("https://www.icpwebportal.com/api/wells", {
         method: "POST",
         headers: {

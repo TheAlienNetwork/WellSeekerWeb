@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import WellListTable, { type Well } from "@/components/WellListTable";
-import { RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -12,41 +11,13 @@ interface WellsPageProps {
   onSelectWell: (well: Well) => void;
 }
 
-interface WellsResponse {
-  wells: Well[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
 export default function WellsPage({ onSelectWell }: WellsPageProps) {
   const [selectedWellId, setSelectedWellId] = useState<string>();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const { toast } = useToast();
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1); // Reset to first page on search
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  const { data: wellsResponse, isLoading, error, refetch } = useQuery<WellsResponse>({
-    queryKey: ["/api/wells", page, debouncedSearch],
-    queryFn: async () => {
-      const response = await fetch(`/api/wells?page=${page}&limit=100&search=${encodeURIComponent(debouncedSearch)}`, {
-        credentials: "include"
-      });
-      if (!response.ok) throw new Error("Failed to fetch wells");
-      return response.json();
-    },
+  const { data: wells, isLoading, error, refetch } = useQuery({
+    queryKey: ["/api/wells"],
+    queryFn: () => api.wells.list(),
     onError: (err) => {
       if (err.message.includes("invalid token") || err.message.includes("expired")) {
         toast({
@@ -127,67 +98,24 @@ export default function WellsPage({ onSelectWell }: WellsPageProps) {
     );
   }
 
-  const wells = wellsResponse?.wells || [];
-  const pagination = wellsResponse?.pagination;
-
   // Render the well list table
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Wells</h1>
-          <p className="text-sm text-muted-foreground">
-            {pagination ? `Showing ${wells.length} of ${pagination.total} wells` : 'Select a well to view detailed information'}
-          </p>
+          <p className="text-sm text-muted-foreground">Select a well to view detailed information</p>
         </div>
         <Button onClick={handleRefresh} variant="outline" data-testid="button-refresh-wells">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
-      
-      <div className="flex gap-2">
-        <Input
-          placeholder="Search wells by name, job number, operator, or rig..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-md"
-        />
-      </div>
-
       <WellListTable
-        wells={wells}
+        wells={wells || []}
         onSelectWell={handleSelectWell}
         selectedWellId={selectedWellId}
       />
-
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Page {pagination.page} of {pagination.totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1 || isLoading}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-              disabled={page === pagination.totalPages || isLoading}
-            >
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
