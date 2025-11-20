@@ -11,6 +11,7 @@ import LoginPage from "@/pages/login";
 import WellsPage from "@/pages/wells";
 import WellDetailsPage from "@/pages/well-details";
 import Dashboard from "@/pages/dashboard";
+import ReportsPage from "@/pages/reports";
 import NotFound from "@/pages/not-found";
 import type { Well } from "@/components/WellListTable";
 import { api } from "@/lib/api";
@@ -116,10 +117,7 @@ function Router() {
                 <WellDetailsPage selectedWellId={selectedWellId} />
               </Route>
               <Route path="/reports">
-                <div className="space-y-4 p-6">
-                  <h1 className="text-2xl font-semibold">Reports</h1>
-                  <p className="text-muted-foreground">Report generation coming soon</p>
-                </div>
+                <ReportsPage />
               </Route>
               <Route path="/settings">
                 <div className="space-y-4 p-6">
