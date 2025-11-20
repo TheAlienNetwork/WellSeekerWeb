@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,11 +33,11 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
 
     try {
       const result = await api.auth.login(email, password);
-      onLogin(result.email);
       toast({
         title: "Login successful",
         description: "Welcome to Well Seeker Pro",
       });
+      onLogin(result.email);
     } catch (error: any) {
       toast({
         title: "Login failed",
