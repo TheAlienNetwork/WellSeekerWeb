@@ -1,0 +1,113 @@
+Public MySele As String
+Public MySele2 As String
+
+Sub testAPI()
+'done
+    load Login
+    Login.Show
+End Sub
+
+Sub MySearch()
+'done
+    load Search
+    Search.Show
+End Sub
+
+Sub SelectWell()
+'done
+    If Sheet1.Range("B1").Value = MySele Then 'well was already selected
+        Exit Sub
+    Else
+        MySele = Sheet1.Range("b1").Value
+    End If
+    DoEvents
+    Sheet1.Range("b2").Value = 1 'set BHA
+    
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Sheet3.ListObjects("SelectedWell").QueryTable.Refresh BackgroundQuery:=False
+    'Sheet6.ListObjects("WS_Wells").QueryTable.Refresh BackgroundQuery:=False
+    Application.DisplayAlerts = True
+    
+    If Err.Number <> 0 Then GoTo refreshfailure
+    Err.Clear
+continuedcode:
+    Call General.fixList
+    Sheet3.ListObjects("MySection").QueryTable.Refresh BackgroundQuery:=False
+    '?Sheet2.ListObjects("SelectedBHA").QueryTable.Refresh BackgroundQuery:=False
+    Sheet5.ListObjects("GetWellRunInfo").QueryTable.Refresh BackgroundQuery:=False
+    'Sheet5.ListObjects("MotorReport").QueryTable.Refresh BackgroundQuery:=False
+    Sheet7.ListObjects("FacilityDetails").QueryTable.Refresh BackgroundQuery:=False
+    Sheet8.ListObjects("Mags").QueryTable.Refresh BackgroundQuery:=False
+    Sheet2.ListObjects("SelectedBHA").QueryTable.Refresh BackgroundQuery:=False
+    'Sheet21.ListObjects("MudInfo").QueryTable.Refresh BackgroundQuery:=False
+    Sheet9.ListObjects("PlannedWellbore").QueryTable.Refresh BackgroundQuery:=False
+    If Err.Number = 1004 Then 'GoTo refreshfailure
+        MsgBox "Job info unavailable or invalid credentials"
+    End If
+
+'    Call General.fixList
+Sheet12.Range("BM2:CM3").ClearContents
+Sheet18.Range("B26:F28, C11:D11, C9:E9, H9").ClearContents
+Sheet18.Range("C13:D20, B29:P30").ClearContents
+Sheet11.Range("T40:AG43").ClearContents
+Call General.recognizepre
+Exit Sub
+
+refreshfailure:
+    Sheet10.ListObjects("TokenValue").QueryTable.Refresh BackgroundQuery:=False
+    'Sheet6.ListObjects("WS_Wells").QueryTable.Refresh BackgroundQuery:=False
+    Err.Clear
+    Sheet3.ListObjects("SelectedWell").QueryTable.Refresh BackgroundQuery:=False
+GoTo continuedcode
+
+End Sub
+
+Sub SelectRun()
+'done
+    If Sheet1.Range("b2").Value = MySele2 Then
+        Exit Sub
+    Else
+        MySele2 = Sheet1.Range("b2").Value
+    End If
+    Application.ScreenUpdating = False
+    Sheet3.ListObjects("MySection").QueryTable.Refresh BackgroundQuery:=False
+    Sheet2.ListObjects("SelectedBHA").QueryTable.Refresh BackgroundQuery:=False
+    Sheet17.ListObjects("ProbeOrder").QueryTable.Refresh BackgroundQuery:=False
+    Sheet5.ListObjects("GetWellRunInfo").QueryTable.Refresh BackgroundQuery:=False
+    'Sheet21.ListObjects("MudInfo").QueryTable.Refresh BackgroundQuery:=False
+    Sheet9.ListObjects("PlannedWellbore").QueryTable.Refresh BackgroundQuery:=False
+    'Sheet5.ListObjects("MotorReport").QueryTable.Refresh BackgroundQuery:=False
+    Application.ScreenUpdating = True
+    'Call General.fixList
+Sheet12.Range("BM2:CM3").ClearContents
+Sheet18.Range("B26:F28, C11:D11, C9:E9, H9").ClearContents
+Sheet18.Range("C13:D20, B29:P30").ClearContents
+Sheet11.Range("T40:AG43").ClearContents
+Call General.recognizepre
+End Sub
+Sub resetSele()
+'done
+    MySele = Sheet1.Range("B1")
+    MySele2 = Sheet1.Range("b2")
+End Sub
+Sub RefreshWells()
+'done
+    Range("B6").Value = Range("B5").Value
+'    ActiveWorkbook.RefreshAll
+    Sheet6.ListObjects("WS_Wells").QueryTable.Refresh BackgroundQuery:=False
+    Sheet11.Range("I7").Value = Now()
+    Range("B1").Value = Range("D6").Value
+    
+    Sheet3.ListObjects("SelectedWell").QueryTable.Refresh BackgroundQuery:=False
+    Sheet7.ListObjects("FacilityDetails").QueryTable.Refresh BackgroundQuery:=False
+    Sheet8.ListObjects("Mags").QueryTable.Refresh BackgroundQuery:=False
+    Sheet3.ListObjects("MySection").QueryTable.Refresh BackgroundQuery:=False
+    Sheet2.ListObjects("SelectedBHA").QueryTable.Refresh BackgroundQuery:=False
+    Sheet17.ListObjects("ProbeOrder").QueryTable.Refresh BackgroundQuery:=False
+    Sheet5.ListObjects("GetWellRunInfo").QueryTable.Refresh BackgroundQuery:=False
+    'Sheet21.ListObjects("MudInfo").QueryTable.Refresh BackgroundQuery:=False
+    Sheet9.ListObjects("PlannedWellbore").QueryTable.Refresh BackgroundQuery:=False
+    'Call Module2.ListBox1_Change
+    Call General.fixList
+End Sub
