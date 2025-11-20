@@ -27,10 +27,10 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
 export const api = {
   auth: {
-    login: (email: string, password: string, productKey: string) =>
+    login: (email: string, password: string) =>
       fetchAPI<{ success: boolean; email: string }>("/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password, productKey }),
+        body: JSON.stringify({ email, password }),
       }),
     
     logout: () =>
