@@ -69,10 +69,11 @@ The application connects to these Well Seeker Pro API endpoints:
 
 ### Configuration
 
-1. Add your credentials to Replit Secrets:
-   - `WELLSEEKER_PRODUCT_KEY` - Your Well Seeker Pro product key
+1. Add your Well Seeker Pro tokens to Replit Secrets:
+   - `WELLSEEKER_ACCESS_TOKEN` - Your access token from Well Seeker Pro
+   - `WELLSEEKER_REFRESH_TOKEN` - Your refresh token for automatic token renewal
 
-2. Users log in with their Well Seeker Pro username and password
+2. Users can log in with any email/password (authentication is handled by the tokens)
 
 ### Deployment
 
