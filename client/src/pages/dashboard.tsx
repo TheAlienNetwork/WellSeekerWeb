@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
-import type { WellDashboardData, BHARun } from "@shared/schema";
+import type { WellDashboardData, BHARun, Well } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,15 +39,33 @@ import {
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-export default function Dashboard() {
+interface DashboardProps {
+  selectedWell: Well | null;
+}
+
+export default function Dashboard({ selectedWell }: DashboardProps) {
   const searchParams = new URLSearchParams(useSearch());
-  const wellId = searchParams.get("wellId") || "10"; // Default to well ID 10
+  const wellId = searchParams.get("wellId") || selectedWell?.id;
   const runIdFromUrl = searchParams.get("runId");
   
   const [, setLocation] = useLocation();
   const [selectedRunId, setSelectedRunId] = useState<string>(runIdFromUrl || "");
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const { toast } = useToast();
+
+  // Redirect if no well selected
+  if (!wellId) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-lg font-semibold mb-2">No Well Selected</p>
+          <p className="text-sm text-muted-foreground mb-4">Please select a well from the Wells page</p>
+          <Button onClick={() => setLocation("/wells")}>Go to Wells</Button>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch BHA runs for this well
   const { data: bhaRuns, isLoading: runsLoading } = useQuery<BHARun[]>({

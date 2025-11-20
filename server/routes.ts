@@ -340,12 +340,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 100;
+      const search = (req.query.search as string) || '';
+
       // Call wells endpoint with POST method and required parameters
       let token = await getWellSeekerToken(req);
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
 
-      console.log(`Calling Wells API with token starting with: ${token.substring(0, 20)}...`);
-      console.log(`Token length: ${token.length} characters`);
+      console.log(`Calling Wells API (page ${page}, limit ${limit})...`);
 
       const makeWellsRequest = async (authToken: string) => {
         return await fetch("https://www.icpwebportal.com/api/wells", {
@@ -453,10 +456,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const wellsData = await response.json();
-      console.log(`Wells API Response Data:`, JSON.stringify(wellsData).substring(0, 200) + '...');
 
       // Transform Well Seeker Pro API response to our Well format
-      const wells: Well[] = Array.isArray(wellsData) ? wellsData.map((well, index) => ({
+      let wells: Well[] = Array.isArray(wellsData) ? wellsData.map((well, index) => ({
         id: well.id ? String(well.id) : (well.jobNum ? `job-${well.jobNum}-${index}` : `well-${index}`),
         jobNum: well.jobNum || '',
         actualWell: well.actualWell || well.wellName || '',
@@ -465,8 +467,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         wellStatus: well.wellStatus || 'N/A',
       })) : [];
 
-      console.log(`Successfully fetched ${wells.length} wells`);
-      res.json(wells);
+      // Apply search filter if provided
+      if (search) {
+        const searchLower = search.toLowerCase();
+        wells = wells.filter(well => 
+          well.actualWell.toLowerCase().includes(searchLower) ||
+          well.jobNum.toLowerCase().includes(searchLower) ||
+          well.operator.toLowerCase().includes(searchLower) ||
+          well.rig.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Calculate pagination
+      const total = wells.length;
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedWells = wells.slice(startIndex, endIndex);
+
+      console.log(`Successfully fetched ${total} wells, returning page ${page} (${paginatedWells.length} items)`);
+      
+      res.json({
+        wells: paginatedWells,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      });
     } catch (error) {
       console.error("Error fetching wells:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
