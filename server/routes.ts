@@ -117,9 +117,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if access token is configured
       const accessToken = process.env.WELLSEEKER_ACCESS_TOKEN;
       if (!accessToken) {
-        console.error("WELLSEEKER_ACCESS_TOKEN not configured");
-        return res.status(500).json({ error: "Server configuration error. Please add WELLSEEKER_ACCESS_TOKEN in Secrets." });
+        console.error("WELLSEEKER_ACCESS_TOKEN not configured in environment");
+        return res.status(500).json({ 
+          error: "Well Seeker Pro API token not configured. Please restart the application after adding WELLSEEKER_ACCESS_TOKEN to Secrets." 
+        });
       }
+
+      console.log("Access token found, creating session for:", email);
 
       // Simple session creation - token is already validated
       req.session.userId = email;
