@@ -178,7 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = await getWellSeekerToken(req);
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
       
-      const response = await fetch("https://www.icpwebportal.com/wells", {
+      const response = await fetch("https://www.icpwebportal.com/api/wells", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
