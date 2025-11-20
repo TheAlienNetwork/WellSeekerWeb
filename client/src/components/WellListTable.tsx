@@ -22,12 +22,15 @@ interface WellListTableProps {
 export default function WellListTable({ wells, onSelectWell, selectedWellId }: WellListTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredWells = wells.filter(well =>
-    well.jobNum.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    well.actualWell.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    well.rig.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    well.operator.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredWells = wells.filter(well => {
+    const search = searchTerm.toLowerCase();
+    return (
+      (well.jobNum || '').toLowerCase().includes(search) ||
+      (well.actualWell || '').toLowerCase().includes(search) ||
+      (well.rig || '').toLowerCase().includes(search) ||
+      (well.operator || '').toLowerCase().includes(search)
+    );
+  });
 
   const getStatusVariant = (status: string): "default" | "secondary" | "outline" => {
     if (status === "EOW Sent") return "default";

@@ -207,7 +207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Transform Well Seeker Pro API response to our Well format
       const wells: Well[] = Array.isArray(wellsData) ? wellsData.map((well, index) => ({
-        id: well.jobNum || String(index + 1),
+        id: well.id ? String(well.id) : (well.jobNum ? `${well.jobNum}-${index}` : String(index + 1)),
         jobNum: well.jobNum || '',
         actualWell: well.actualWell || well.wellName || '',
         rig: well.rig || '',
