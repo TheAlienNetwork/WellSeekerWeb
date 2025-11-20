@@ -174,6 +174,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = await getWellSeekerToken(req);
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
       
+      console.log(`Calling Wells API with token starting with: ${token.substring(0, 20)}...`);
+      
       const response = await fetch("https://www.icpwebportal.com/api/wells", {
         method: "POST",
         headers: {
@@ -189,11 +191,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log(`Wells API Response Status: ${response.status} ${response.statusText}`);
+      console.log(`Response Headers:`, Object.fromEntries(response.headers.entries()));
 
       if (response.status === 401) {
         const errorBody = await response.text();
-        console.error(`Wells API 401 Error: ${errorBody}`);
-        throw new Error(`Authentication failed: The WELLSEEKER_ACCESS_TOKEN is invalid or expired. Please update it in Secrets.`);
+        console.error(`Wells API 401 Error Response Body: ${errorBody}`);
+        console.error(`Token used (first 30 chars): ${token.substring(0, 30)}...`);
+        console.error(`Token length: ${token.length}`);
+        console.error(`UserName sent: ${req.session.userEmail}`);
+        console.error(`ProductKey sent: ${productKey}`);
+        throw new Error(`Authentication failed: The WELLSEEKER_ACCESS_TOKEN is invalid or expired. Please update it in Secrets. Error details: ${errorBody}`);
       }
 
       if (!response.ok) {
@@ -207,7 +214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Transform Well Seeker Pro API response to our Well format
       const wells: Well[] = Array.isArray(wellsData) ? wellsData.map((well, index) => ({
-        id: well.id ? String(well.id) : (well.jobNum ? `${well.jobNum}-${index}` : String(index + 1)),
+        id: well.id ? String(well.id) : (well.jobNum ? `job-${well.jobNum}-${index}` : `well-${index}`),
         jobNum: well.jobNum || '',
         actualWell: well.actualWell || well.wellName || '',
         rig: well.rig || '',
@@ -215,6 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         wellStatus: well.wellStatus || 'N/A',
       })) : [];
 
+      console.log(`Successfully fetched ${wells.length} wells`);
       res.json(wells);
     } catch (error) {
       console.error("Error fetching wells:", error);
