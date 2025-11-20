@@ -36,12 +36,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function getWellSeekerToken(req: any): Promise<string> {
     // Check if we have a provided access token from environment
     const providedToken = process.env.WELLSEEKER_ACCESS_TOKEN;
-    if (!providedToken) {
-      throw new Error("WELLSEEKER_ACCESS_TOKEN is not configured in Secrets. Please add it to continue.");
+    if (providedToken) {
+      return providedToken;
     }
 
-    console.log("Using WELLSEEKER_ACCESS_TOKEN from environment");
-    return providedToken;
+    // Check if we have a cached token in the session
+    if (req.session.wellSeekerToken) {
+      return req.session.wellSeekerToken;
+    }
+
+    throw new Error("No access token available. Please configure WELLSEEKER_ACCESS_TOKEN in secrets.");
   }
 
   // Helper function to make authenticated API calls to Well Seeker Pro
@@ -189,12 +193,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log(`Wells API Response Status: ${response.status} ${response.statusText}`);
-
-      if (response.status === 401) {
-        const errorBody = await response.text();
-        console.error(`Wells API 401 Error: ${errorBody}`);
-        throw new Error(`Authentication failed: The WELLSEEKER_ACCESS_TOKEN is invalid or expired. Please update it in Secrets.`);
-      }
 
       if (!response.ok) {
         const errorBody = await response.text();
