@@ -174,8 +174,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      // Use the correct endpoint from API documentation  
-      const wellsData = await callWellSeekerAPI<any[]>(req, "JobList");
+      // Try Jobs endpoint which may return list of all jobs
+      const wellsData = await callWellSeekerAPI<any[]>(req, "Jobs");
 
       // Transform Well Seeker Pro API response to our Well format
       const wells: Well[] = wellsData.map((well, index) => ({
@@ -190,7 +190,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(wells);
     } catch (error) {
       console.error("Error fetching wells:", error);
-      res.status(500).json({ error: "Failed to fetch wells" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ error: `Failed to fetch wells: ${errorMessage}` });
     }
   });
 
