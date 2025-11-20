@@ -15,7 +15,7 @@ import ReportsPage from "@/pages/reports";
 import NotFound from "@/pages/not-found";
 import type { Well } from "@/components/WellListTable";
 import { api } from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 function Router() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
