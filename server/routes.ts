@@ -34,6 +34,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper function to get Well Seeker Pro auth token using session credentials
   async function getWellSeekerToken(req: any): Promise<string> {
+    // Check if we have a provided access token from environment
+    const providedToken = process.env.WELLSEEKER_ACCESS_TOKEN;
+    if (providedToken) {
+      return providedToken;
+    }
+
     // Check if we have a cached token in the session
     if (req.session.wellSeekerToken) {
       return req.session.wellSeekerToken;
