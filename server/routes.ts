@@ -169,19 +169,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      // Try different possible endpoints for job list
-      let wellsData;
-      try {
-        wellsData = await callWellSeekerAPI<any[]>(req, "jobList");
-      } catch (error) {
-        console.log("jobList endpoint failed, trying jobs...");
-        try {
-          wellsData = await callWellSeekerAPI<any[]>(req, "jobs");
-        } catch (error2) {
-          console.log("jobs endpoint failed, trying JobList...");
-          wellsData = await callWellSeekerAPI<any[]>(req, "JobList");
-        }
-      }
+      // Use the correct endpoint from API documentation
+      const wellsData = await callWellSeekerAPI<any[]>(req, "JobList");
       
       // Transform Well Seeker Pro API response to our Well format
       const wells: Well[] = wellsData.map((well, index) => ({
@@ -208,7 +197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId } = req.params;
 
-      const wellData = await callWellSeekerAPI<any>(req, `job/${wellId}`);
+      const wellData = await callWellSeekerAPI<any>(req, `Job/${wellId}`);
       
       // Transform Well Seeker Pro API response to our WellDetails format
       const wellDetails: WellDetails = {
@@ -244,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId, bhaNumber } = req.params;
 
-      const bhaData = await callWellSeekerAPI<any[]>(req, `bha/${wellId}/${bhaNumber}`);
+      const bhaData = await callWellSeekerAPI<any[]>(req, `BHA/${wellId}/${bhaNumber}`);
       
       // Transform Well Seeker Pro API response to our BHAComponent format
       const bhaComponents: BHAComponent[] = bhaData.map((component, index) => ({
@@ -276,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For drilling parameters, we need a run number - default to latest run
       const runNumber = runNum || '0';
-      const paramsData = await callWellSeekerAPI<any>(req, `run/${wellId}/${runNumber}`);
+      const paramsData = await callWellSeekerAPI<any>(req, `Run/${wellId}/${runNumber}`);
       
       // Transform Well Seeker Pro API response to our DrillingParameters format
       const parameters: DrillingParameters = {
@@ -312,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { wellId } = req.params;
 
-      const bhaRunsData = await callWellSeekerAPI<any[]>(req, `runList/${wellId}`);
+      const bhaRunsData = await callWellSeekerAPI<any[]>(req, `RunList/${wellId}`);
       
       // Transform to array of BHA run numbers
       const bhaRuns = bhaRunsData.map((run, index) => run.runNum || run.bhaNumber || run.runNumber || index);
@@ -336,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Tool components require a run number - default to latest run
       const runNumber = runNum || '0';
-      const componentsData = await callWellSeekerAPI<any[]>(req, `toolComponents/${wellId}/${runNumber}`);
+      const componentsData = await callWellSeekerAPI<any[]>(req, `ToolComponents/${wellId}/${runNumber}`);
       
       // Transform Well Seeker Pro API response to our ToolComponent format
       const components: ToolComponent[] = componentsData.map(component => ({
