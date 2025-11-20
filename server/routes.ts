@@ -60,6 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       headers: {
         "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
+        "Accept": "application/json",
       },
     });
 
