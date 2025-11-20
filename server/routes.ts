@@ -175,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Use the correct endpoint from API documentation  
-      const wellsData = await callWellSeekerAPI<any[]>(req, "well/jobList");
+      const wellsData = await callWellSeekerAPI<any[]>(req, "JobList");
 
       // Transform Well Seeker Pro API response to our Well format
       const wells: Well[] = wellsData.map((well, index) => ({
