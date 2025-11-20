@@ -174,18 +174,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      // Try Jobs endpoint which may return list of all jobs
-      const wellsData = await callWellSeekerAPI<any[]>(req, "Jobs");
+      // Call wells endpoint with POST method and required parameters
+      const token = await getWellSeekerToken(req);
+      const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
+      
+      const response = await fetch("https://www.icpwebportal.com/wells", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          productKey: productKey,
+          getFootage: 'true',
+          databaseOrg: ''
+        }).toString(),
+      });
+
+      console.log(`Wells API Response Status: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error(`Wells API Error Response: ${errorBody}`);
+        throw new Error(`Well Seeker Pro API error: ${response.statusText}`);
+      }
+
+      const wellsData = await response.json();
+      console.log(`Wells API Response Data:`, JSON.stringify(wellsData).substring(0, 200) + '...');
 
       // Transform Well Seeker Pro API response to our Well format
-      const wells: Well[] = wellsData.map((well, index) => ({
+      const wells: Well[] = Array.isArray(wellsData) ? wellsData.map((well, index) => ({
         id: well.jobNum || String(index + 1),
         jobNum: well.jobNum || '',
         actualWell: well.actualWell || well.wellName || '',
         rig: well.rig || '',
         operator: well.operator || '',
         wellStatus: well.wellStatus || 'N/A',
-      }));
+      })) : [];
 
       res.json(wells);
     } catch (error) {
