@@ -1,0 +1,72 @@
+Dim mypass As String
+Private Sub CheckBoxSavePW_Click()
+
+End Sub
+Private Sub CheckBoxShowPW_Click()
+    Debug.Print "CheckBoxShowPW_Click event triggered."
+    If CheckBoxShowPW.Value Then
+        Pword.PasswordChar = ""
+    Else
+        Pword.PasswordChar = "*"
+    End If
+End Sub
+Private Sub CommandButton1_Click()
+    'Unload Login
+    Login.Hide
+End Sub
+Private Sub CommandButton2_Click()
+
+myname = Uname.Text
+mypass = Pword.Text
+If Pword.Text = "" Then
+    mypass = " "
+End If
+Sheet10.Range("A1").Value = myname
+Sheet10.Range("A2").Value = mypass
+Sheet10.Range("B2").Value = CheckBoxSavePW.Value
+Sheet10.Calculate
+'ThisWorkbook.Connections("query - myToken").Refresh 'Is Error Then GoTo oops
+
+'ThisWorkbook.Connections("query - AccessVerification").QueryTable.Refresh BackgroundQuery:=False
+Sheet1.ListObjects("AccessVerification").QueryTable.Refresh BackgroundQuery:=False
+Sheet10.ListObjects("TokenValue").QueryTable.Refresh BackgroundQuery:=False
+If Sheet10.Range("A3") = "200 OK" Then
+    ThisWorkbook.Connections("query - WS_Wells").Refresh
+    ThisWorkbook.RefreshAll
+    Sheet11.Range("I7").Value = Now()
+    Sheet10.Range("B3").Value = Now()
+    Sheet1.Range("B1") = 1
+    Sheet1.Range("B2") = 1
+    'Call Navigation.SelectWell
+    'Unload Login
+    Login.Hide
+Else 'invalid credentials
+'oops:
+    MsgBox Sheet10.Range("A4")
+    mypass = vbNullString
+    Sheet10.Range("A2").Value = ""
+    Sheet1.Range("B1") = 1
+End If
+Sheet11.Range("J45").Value = Environ("Username")
+Sheet10.Range("B2").Value = CheckBoxSavePW.Value
+End Sub
+Private Sub Uname_Change()
+
+End Sub
+Private Sub UserForm_Activate()
+    Uname = Sheet10.Range("A1").Value
+    CheckBoxSavePW.Value = Sheet10.Range("B2").Value
+    If CheckBoxSavePW.Value Then
+        Pword.Text = Sheet10.Range("A2").Value
+    Else
+        Pword.Text = ""
+    End If
+    Pword.SetFocus
+End Sub
+Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
+    Sheet10.Range("B2").Value = CheckBoxSavePW.Value
+    If Not CheckBoxSavePW.Value Then
+        Sheet10.Range("A2").ClearContents
+    End If
+End Sub
+
