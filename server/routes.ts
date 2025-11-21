@@ -342,11 +342,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { wellId } = req.params;
-      const runs = await storage.getBHARuns(wellId);
-      res.json(runs);
+
+      // Get the well details to find the actualWell name
+      const token = await getWellSeekerToken(req);
+      const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
+
+      const wellsResponse = await fetch("https://www.icpwebportal.com/api/wells", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          productKey: productKey,
+          getFootage: 'true',
+          databaseOrg: ''
+        }).toString(),
+      });
+
+      if (!wellsResponse.ok) {
+        console.error("Failed to fetch wells list");
+        return res.status(500).json({ error: "Failed to fetch wells list from Well Seeker Pro API" });
+      }
+
+      const wellsData = await wellsResponse.json();
+      const selectedWell = Array.isArray(wellsData) 
+        ? wellsData.find(w => String(w.id) === wellId || String(w.jobNum) === wellId)
+        : null;
+
+      if (!selectedWell || !selectedWell.actualWell) {
+        console.log("Well not found or actualWell name missing");
+        return res.status(404).json({ error: "Well not found" });
+      }
+
+      const wellName = selectedWell.actualWell;
+
+      // Call getBhaHeaders to get all BHA runs
+      const headersResponse = await fetch("https://www.icpwebportal.com/api/well/drillString/getBhaHeaders", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          wellName: wellName,
+          productKey: productKey
+        }).toString(),
+      });
+
+      if (!headersResponse.ok) {
+        console.error("Failed to fetch BHA headers");
+        return res.status(500).json({ error: "Failed to fetch BHA runs from Well Seeker Pro API" });
+      }
+
+      const headersData = await headersResponse.json();
+
+      // Transform headers to BHARun format
+      const bhaRuns: any[] = Array.isArray(headersData) 
+        ? headersData.map((header, index) => ({
+            id: `${wellId}-run-${header.bhaNum || header.bha || index}`,
+            runNumber: header.runNum || index + 1,
+            bhaNumber: header.bhaNum || header.bha || index + 1,
+            mwdNumber: header.mwd || header.mwdNum || 0,
+            wellId: wellId
+          }))
+        : [];
+
+      console.log(`Fetched ${bhaRuns.length} BHA runs for well ${wellId}`);
+      res.json(bhaRuns);
     } catch (error) {
       console.error("Error fetching BHA runs:", error);
-      res.status(500).json({ error: "Failed to fetch BHA runs" });
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch BHA runs";
+      res.status(500).json({ error: errorMessage });
     }
   });
 
@@ -363,11 +432,202 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "wellId and runId are required" });
       }
 
-      const wellData = await storage.getWellDashboardData(String(wellId), String(runId));
+      // Get the well details to find the actualWell name
+      const token = await getWellSeekerToken(req);
+      const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
+
+      const wellsResponse = await fetch("https://www.icpwebportal.com/api/wells", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          productKey: productKey,
+          getFootage: 'true',
+          databaseOrg: ''
+        }).toString(),
+      });
+
+      if (!wellsResponse.ok) {
+        return res.status(500).json({ error: "Failed to fetch wells list" });
+      }
+
+      const wellsData = await wellsResponse.json();
+      const selectedWell = Array.isArray(wellsData) 
+        ? wellsData.find(w => String(w.id) === String(wellId) || String(w.jobNum) === String(wellId))
+        : null;
+
+      if (!selectedWell || !selectedWell.actualWell) {
+        return res.status(404).json({ error: "Well not found" });
+      }
+
+      const wellName = selectedWell.actualWell;
+
+      // Parse BHA number from runId - support both formats: "wellId-run-X" and direct BHA numbers
+      let bhaNumber: string;
+      const runIdStr = String(runId);
+      if (runIdStr.includes('-run-')) {
+        bhaNumber = runIdStr.split('-run-')[1] || '1';
+      } else {
+        // If runId is just a number or doesn't contain '-run-', use it directly
+        bhaNumber = runIdStr.replace(/[^0-9]/g, '') || '1';
+      }
+
+      // Fetch well info for location and other metadata
+      const wellInfoResponse = await fetch("https://www.icpwebportal.com/api/well/wellInfo/getWellInfo", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          wellName: wellName,
+          productKey: productKey
+        }).toString(),
+      });
+
+      if (!wellInfoResponse.ok) {
+        return res.status(500).json({ error: "Failed to fetch well information from Well Seeker Pro API" });
+      }
+
+      const wellInfo = await wellInfoResponse.json();
+
+      // Call getBhaHeaders to get the specific run's data
+      const headersResponse = await fetch("https://www.icpwebportal.com/api/well/drillString/getBhaHeaders", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          wellName: wellName,
+          productKey: productKey
+        }).toString(),
+      });
+
+      if (!headersResponse.ok) {
+        return res.status(500).json({ error: "Failed to fetch BHA headers" });
+      }
+
+      const headersData = await headersResponse.json();
+
+      // Find the specific run by matching the BHA number
+      const bhaHeader = Array.isArray(headersData) 
+        ? headersData.find(h => String(h.bhaNum || h.bha) === bhaNumber)
+        : headersData;
+
+      if (!bhaHeader) {
+        return res.status(404).json({ error: `BHA run ${bhaNumber} not found for well ${wellName}` });
+      }
+
+      // Safe numeric conversion with fallback
+      const safeNumber = (val: any, defaultVal: number = 0): number => {
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? defaultVal : parsed;
+      };
+
+      const safeInt = (val: any, defaultVal: number = 0): number => {
+        const parsed = parseInt(val);
+        return isNaN(parsed) ? defaultVal : parsed;
+      };
+
+      // Transform to WellDashboardData format using BHA header data
+      const wellData: any = {
+        wellId: String(wellId),
+        runId: String(runId),
+        operator: selectedWell.operator || '',
+        rig: selectedWell.rig || '',
+        well: selectedWell.actualWell || '',
+        jobNumber: selectedWell.jobNum || '',
+        wellbore: `${selectedWell.actualWell} - Wellbore 1`,
+        mwdNumber: safeInt(bhaHeader.mwd || bhaHeader.mwdNum),
+        bhaNumber: safeInt(bhaHeader.bhaNum || bhaHeader.bha || bhaNumber),
+        section: bhaHeader.section || wellInfo.section || 'N/A',
+        county: wellInfo.county || '',
+        state: wellInfo.state || '',
+        lat: safeNumber(wellInfo.lat || selectedWell.lat),
+        long: safeNumber(wellInfo.lon || wellInfo.long || selectedWell.lon),
+        northRef: (wellInfo.northRef !== false),
+        vs: safeNumber(wellInfo.vs || bhaHeader.vs),
+        gridConv: safeNumber(wellInfo.gridConv || bhaHeader.gridConv),
+        declination: safeNumber(wellInfo.dec || wellInfo.declination || bhaHeader.declination),
+        magField: safeNumber(wellInfo.bTotal || wellInfo.magField || bhaHeader.magField),
+        dip: safeNumber(wellInfo.dip || bhaHeader.dip),
+        magModel: wellInfo.magModel || bhaHeader.magModel || 'User defined',
+        magDate: wellInfo.magDate || bhaHeader.magDate || new Date().toISOString().split('T')[0],
+        plugIn: bhaHeader.plugIn || null,
+        unplug: bhaHeader.unplug || null,
+        timeIn: bhaHeader.timeIn || null,
+        timeOut: bhaHeader.timeOut || '',
+        depthIn: safeNumber(bhaHeader.depthIn),
+        depthOut: safeNumber(bhaHeader.depthOut),
+        circHrs: safeNumber(bhaHeader.circHrs),
+        drillingHrs: safeNumber(bhaHeader.drillingHrs || bhaHeader.drillHours),
+        brtHrs: safeNumber(bhaHeader.brtHrs),
+        motorFail: bhaHeader.motorFail === true,
+        mwdFail: bhaHeader.mwdFail === true,
+        pooh: bhaHeader.pooh || bhaHeader.reasonPOOH || '',
+        mwdComments: bhaHeader.mwdComments || '',
+        pw: safeInt(bhaHeader.pw),
+        ssq: safeInt(bhaHeader.ssq),
+        tfsq: safeInt(bhaHeader.tfsq),
+        crossover: safeInt(bhaHeader.crossover),
+        gcf: safeInt(bhaHeader.gcf),
+        dao: safeInt(bhaHeader.dao),
+        surfaceSystemVersion: safeInt(bhaHeader.surfaceSystemVersion),
+        svyOffset: safeNumber(bhaHeader.svyOffset),
+        gamOffset: safeNumber(bhaHeader.gamOffset),
+        stickup: safeNumber(bhaHeader.stickup),
+        retrievable: safeNumber(bhaHeader.retrievable),
+        pinToSetScrew: safeNumber(bhaHeader.pinToSetScrew),
+        probeOrder: safeNumber(bhaHeader.probeOrder),
+        itemizedBHA: bhaHeader.itemizedBHA || 'See BHA tab',
+        mwdMake: bhaHeader.mwdMake || '',
+        mwdModel: bhaHeader.mwdModel || '',
+        ubhoSN: String(bhaHeader.ubhoSN || bhaHeader.ubhoSn || ''),
+        helixSN: String(bhaHeader.helixSN || bhaHeader.helixSn || ''),
+        helixType: String(bhaHeader.helixType || ''),
+        pulserSN: String(bhaHeader.pulserSN || bhaHeader.pulserSn || ''),
+        gammaSN: String(bhaHeader.gammaSN || bhaHeader.gammaSn || ''),
+        directionalSN: bhaHeader.directionalSN || bhaHeader.directionalSn || '',
+        batterySN: String(bhaHeader.batterySN || bhaHeader.batterySn || ''),
+        batterySN2: String(bhaHeader.batterySN2 || bhaHeader.batterySn2 || ''),
+        shockToolSN: String(bhaHeader.shockToolSN || bhaHeader.shockToolSn || ''),
+        lih: bhaHeader.lih === true,
+        stalls: safeInt(bhaHeader.stalls),
+        npt: safeNumber(bhaHeader.npt),
+        mwdCoordinator: bhaHeader.mwdCoordinator || '',
+        directionalCoordinator: bhaHeader.directionalCoordinator || '',
+        ddLead: bhaHeader.ddLead || '',
+        mwdLead: bhaHeader.mwdLead || '',
+        pushTimeStamp: bhaHeader.pushTimeStamp || 'No Recent Push',
+        planName: bhaHeader.planName || '',
+        mwdDay: bhaHeader.mwdDay || '',
+        mwdNight: bhaHeader.mwdNight || '',
+        bhaDescription: bhaHeader.bhaDescription || `BHA # ${bhaNumber}`,
+        apiNumber: wellInfo.apiNumber || bhaHeader.apiNumber || '',
+        pulserVersion: safeInt(bhaHeader.pulserVersion),
+        mwdMinTemp: safeNumber(bhaHeader.mwdMinTemp),
+        mwdMaxTemp: safeNumber(bhaHeader.mwdMaxTemp),
+        corrShockToolSN: bhaHeader.corrShockToolSN || '',
+        totalCirculatingHours: safeNumber(bhaHeader.totalCirculatingHours || bhaHeader.circHrs),
+        mudType: bhaHeader.mudType || '',
+        mudWeight: bhaHeader.mudWeight || '',
+        correctingMDG: bhaHeader.correctingMDG || '',
+        battery3: String(bhaHeader.battery3 || ''),
+        babelfishSN: String(bhaHeader.babelfishSN || bhaHeader.babelfishSn || ''),
+        muleShoe: String(bhaHeader.muleShoe || ''),
+      };
+
       res.json(wellData);
     } catch (error) {
       console.error("Error fetching well dashboard data:", error);
-      res.status(500).json({ error: "Failed to fetch well dashboard data" });
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch well dashboard data";
+      res.status(500).json({ error: errorMessage });
     }
   });
 
