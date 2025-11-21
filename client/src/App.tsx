@@ -155,8 +155,15 @@ function AppContent() {
           userEmail={user}
         />
         <div className="flex flex-col flex-1">
-          <header className="flex items-center justify-between p-4 border-b">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
+          <header className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-background to-background/80 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger data-testid="button-sidebar-toggle" />
+              <div className="h-6 w-px bg-border opacity-50" />
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Peeker</span>
+              </div>
+            </div>
             <ThemeToggle />
           </header>
           <main className="flex-1 overflow-auto">
