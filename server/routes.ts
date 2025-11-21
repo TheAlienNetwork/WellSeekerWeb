@@ -159,11 +159,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid Well Seeker Pro credentials" });
       }
 
-      const authData: any = await authResponse.json();
+      // Get raw response text first
+      const rawResponseText = await authResponse.text();
+      console.log("=== RAW AUTH RESPONSE TEXT ===");
+      console.log(rawResponseText);
+      console.log("=== END RAW RESPONSE ===");
 
-      console.log("=== FULL AUTH RESPONSE ===");
+      // Parse JSON
+      const authData: any = JSON.parse(rawResponseText);
+
+      console.log("=== PARSED AUTH RESPONSE ===");
       console.log(JSON.stringify(authData, null, 2));
-      console.log("=== END AUTH RESPONSE ===");
+      console.log("=== END PARSED RESPONSE ===");
       console.log("Auth response keys:", Object.keys(authData));
       console.log("Has access_token:", !!authData.access_token);
       console.log("access_token value:", authData.access_token);
