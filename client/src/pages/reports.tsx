@@ -95,7 +95,7 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
   // Generate Excel file for a component
   const generateExcel = async (componentType: string) => {
     // Validate IDs are non-empty strings
-    if (!wellId || wellId.trim() === "" || !runId || runId.trim() === "") {
+    if (!selectedWellId || selectedWellId.trim() === "" || !selectedRunId || selectedRunId.trim() === "") {
       toast({
         variant: "destructive",
         title: "Error",
@@ -109,7 +109,7 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
     try {
       // Fetch component report data
       const response = await fetch(
-        `/api/component-report/${wellId}/${runId}/${componentType}`,
+        `/api/component-report/${selectedWellId}/${selectedRunId}/${componentType}`,
         { credentials: "include" }
       );
 
@@ -304,7 +304,7 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
                         ? "bg-success/10 border-success text-success hover:bg-success/20" 
                         : ""
                     }`}
-                    disabled={!wellId || !runId || generatingReport !== null}
+                    disabled={!selectedWellId || !selectedRunId || generatingReport !== null}
                     data-testid={`button-export-${component.type}`}
                   >
                     {generatingReport === component.type ? (
