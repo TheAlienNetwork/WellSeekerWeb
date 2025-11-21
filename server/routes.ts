@@ -130,7 +130,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication endpoints
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, directToken } = req.body;
+
+      // Allow direct token input (bypass authentication)
+      if (directToken && directToken.length > 50) {
+        console.log("Using direct token input (bypassing authentication)");
+        console.log("Token length:", directToken.length);
+        
+        // Store in session
+        req.session.userId = email;
+        req.session.userEmail = email;
+        req.session.wellSeekerToken = directToken;
+        
+        req.session.save((err) => {
+          if (err) {
+            console.error("Error saving session:", err);
+            return res.status(500).json({ error: "Failed to save session" });
+          }
+          console.log("Session saved with direct token for:", email);
+          res.json({ success: true, email });
+        });
+        return;
+      }
 
       if (!email || !password) {
         return res.status(400).json({ error: "Email and password are required" });

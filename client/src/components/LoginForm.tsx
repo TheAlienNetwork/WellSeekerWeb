@@ -13,36 +13,59 @@ interface LoginFormProps {
 export default function LoginForm({ onLogin }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [directToken, setDirectToken] = useState("");
+  const [useDirectToken, setUseDirectToken] = useState(false);
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!email || !password) {
-      toast({
-        title: "Missing credentials",
-        description: "Please enter both email and password",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    setError("");
     setIsLoading(true);
 
     try {
-      const result = await api.auth.login(email, password);
+      // Send directToken if using direct token mode
+      const result = await fetch("/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password: useDirectToken ? "" : password,
+          directToken: useDirectToken ? directToken : undefined,
+        }),
+      });
+
+      if (!result.ok) {
+        const errorData = await result.json();
+        throw new Error(errorData.error || "Login failed");
+      }
+
+      const data = await result.json();
+      onLogin(data.email);
       toast({
         title: "Login successful",
         description: "Welcome to Peeker",
       });
-      onLogin(result.email);
-    } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid Peeker credentials. Please check your username and password.",
-        variant: "destructive",
-      });
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+        toast({
+          title: "Login failed",
+          description: err.message || "Invalid Peeker credentials. Please check your credentials.",
+          variant: "destructive",
+        });
+      } else {
+        setError("An unexpected error occurred");
+        toast({
+          title: "Login failed",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -72,18 +95,46 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                 disabled={isLoading}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" data-testid="label-password">Password</Label>
+            {!useDirectToken && (
+              <div className="space-y-2">
+                <Label htmlFor="password" data-testid="label-password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  data-testid="input-password"
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+            <div className="flex items-center space-x-2">
               <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                data-testid="input-password"
+                id="useDirectToken"
+                type="checkbox"
+                checked={useDirectToken}
+                onChange={(e) => setUseDirectToken(e.target.checked)}
                 disabled={isLoading}
               />
+              <Label htmlFor="useDirectToken">Use Direct Token</Label>
             </div>
+            {useDirectToken && (
+              <div className="space-y-2">
+                <Label htmlFor="directToken" data-testid="label-direct-token">Direct Token</Label>
+                <Input
+                  id="directToken"
+                  type="text"
+                  placeholder="Paste your token here"
+                  value={directToken}
+                  onChange={(e) => setDirectToken(e.target.value)}
+                  required
+                  data-testid="input-direct-token"
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+            {error && <p className="text-destructive text-sm">{error}</p>}
             <Button type="submit" className="w-full" data-testid="button-login" disabled={isLoading}>
               {isLoading ? "Signing In..." : "Sign In"}
             </Button>
