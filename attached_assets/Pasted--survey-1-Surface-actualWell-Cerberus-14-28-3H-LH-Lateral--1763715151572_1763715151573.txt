@@ -1,0 +1,169 @@
+[
+  {
+    "survey": "1 - Surface",
+    "actualWell": "Cerberus 14-28 - 3H (LH) - Lateral",
+    "crs": "NAD83 / Texas South Central (ftUS)",
+    "ipm": "MWD+IFR1+MS",
+    "surveyTableName": "New_Survey401",
+    "tieOn": {
+      "inputMeth": "SURFACE",
+      "parentTieOn": "",
+      "tieOn": {
+        "md": 0,
+        "cl": 0,
+        "inc": 0,
+        "azi": 0,
+        "tvd": -333.02,
+        "tvdSs": 0,
+        "ns": 0,
+        "ew": 0,
+        "gridNorth": 13543501.820000004,
+        "gridEast": 2323790.679999996,
+        "vs": 0,
+        "dls": 0,
+        "br": 0,
+        "tr": 0,
+        "tf": 0,
+        "latDeg": 0,
+        "longDeg": 0,
+        "latitude": "",
+        "longitude": "",
+        "ud": 0,
+        "lr": 0,
+        "dist": 0
+      },
+      "depthFrom": 0,
+      "depthTo": 3890,
+      "parentSurveyWell": ""
+    },
+    "locked": false,
+    "inUse": [
+      "2 - Intermediate"
+    ]
+  },
+  {
+    "survey": "2 - Intermediate",
+    "actualWell": "Cerberus 14-28 - 3H (LH) - Lateral",
+    "crs": "NAD83 / Texas South Central (ftUS)",
+    "ipm": "MWD+IFR1+MS",
+    "surveyTableName": "New_Survey910",
+    "tieOn": {
+      "inputMeth": "SURVEY",
+      "parentTieOn": "1 - Surface",
+      "tieOn": {
+        "md": 3889.98,
+        "cl": 0,
+        "inc": 12.99,
+        "azi": 283.06,
+        "tvd": 3469.93,
+        "tvdSs": 0,
+        "ns": 176.05,
+        "ew": -737.6,
+        "gridNorth": 13543677.86971457,
+        "gridEast": 2323053.0790765784,
+        "vs": 0,
+        "dls": 0,
+        "br": 0,
+        "tr": 0,
+        "tf": 0,
+        "latDeg": 0,
+        "longDeg": 0,
+        "latitude": "",
+        "longitude": "",
+        "ud": 0,
+        "lr": 0,
+        "dist": 0
+      },
+      "depthFrom": 3890,
+      "depthTo": 10174,
+      "parentSurveyWell": "Cerberus 14-28 - 3H (LH) - Lateral"
+    },
+    "locked": false,
+    "inUse": [
+      "3 - Curve",
+      "Cerberus 14-28 - 3H (LH) ST - Design 1"
+    ]
+  },
+  {
+    "survey": "3 - Curve",
+    "actualWell": "Cerberus 14-28 - 3H (LH) - Lateral",
+    "crs": "NAD83 / Texas South Central (ftUS)",
+    "ipm": "MWD+IFR1+SAG +MS",
+    "surveyTableName": "New_Survey1010",
+    "tieOn": {
+      "inputMeth": "SURVEY",
+      "parentTieOn": "2 - Intermediate",
+      "tieOn": {
+        "md": 10173.96,
+        "cl": 0,
+        "inc": 11.487,
+        "azi": 283.952,
+        "tvd": 8055.66,
+        "tvdSs": 0,
+        "ns": 426.9,
+        "ew": -1818.76,
+        "gridNorth": 13543928.718067234,
+        "gridEast": 2321971.9186197766,
+        "vs": 0,
+        "dls": 0,
+        "br": 0,
+        "tr": 0,
+        "tf": 0,
+        "latDeg": 0,
+        "longDeg": 0,
+        "latitude": "",
+        "longitude": "",
+        "ud": 0,
+        "lr": 0,
+        "dist": 0
+      },
+      "depthFrom": 10174,
+      "depthTo": 13579,
+      "parentSurveyWell": "Cerberus 14-28 - 3H (LH) - Lateral"
+    },
+    "locked": false,
+    "inUse": [
+      "4 - Lateral"
+    ]
+  },
+  {
+    "survey": "4 - Lateral",
+    "actualWell": "Cerberus 14-28 - 3H (LH) - Lateral",
+    "crs": "NAD83 / Texas South Central (ftUS)",
+    "ipm": "MWD+IFR1+SAG +MS",
+    "surveyTableName": "New_Survey310",
+    "tieOn": {
+      "inputMeth": "SURVEY",
+      "parentTieOn": "3 - Curve",
+      "tieOn": {
+        "md": 13578.95,
+        "cl": 0,
+        "inc": 84.61,
+        "azi": 145.161,
+        "tvd": 10557.91,
+        "tvdSs": 0,
+        "ns": -1936.61,
+        "ew": -258.24,
+        "gridNorth": 13541565.207563229,
+        "gridEast": 2323532.437747551,
+        "vs": 0,
+        "dls": 0,
+        "br": 0,
+        "tr": 0,
+        "tf": 0,
+        "latDeg": 0,
+        "longDeg": 0,
+        "latitude": "",
+        "longitude": "",
+        "ud": 0,
+        "lr": 0,
+        "dist": 0
+      },
+      "depthFrom": 13579.01,
+      "depthTo": 17451.01,
+      "parentSurveyWell": "Cerberus 14-28 - 3H (LH) - Lateral"
+    },
+    "locked": false,
+    "inUse": null
+  }
+]
