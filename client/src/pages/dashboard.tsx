@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
@@ -82,7 +83,8 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
       if (!wellId || wellId.trim() === "") throw new Error("Invalid well ID");
       const response = await fetch(`/api/bha-runs/${wellId}`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch BHA runs");
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!wellId && wellId.trim() !== "",
   });
@@ -109,11 +111,102 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
         throw new Error("Invalid well ID or run ID");
       }
       const response = await fetch(`/api/dashboard/well-data?wellId=${wellId}&runId=${selectedRunId}`, { credentials: "include" });
-      if (!response.ok) throw new Error("Failed to fetch dashboard data");
+      if (!response.ok) {
+        // Return null instead of throwing to allow default data to be used
+        return null;
+      }
       return response.json();
     },
     enabled: !!wellId && wellId.trim() !== "" && !!selectedRunId && selectedRunId.trim() !== "",
   });
+
+  // Create default empty well data if not available
+  const displayData: WellDashboardData = wellData || {
+    wellId: String(wellId),
+    runId: String(selectedRunId),
+    operator: selectedWell?.operator || 'N/A',
+    rig: selectedWell?.rig || 'N/A',
+    well: selectedWell?.actualWell || 'N/A',
+    jobNumber: selectedWell?.jobNum || 'N/A',
+    wellbore: `${selectedWell?.actualWell || 'N/A'} - Wellbore 1`,
+    mwdNumber: 0,
+    bhaNumber: 0,
+    section: 'N/A',
+    county: '',
+    state: '',
+    lat: 0,
+    long: 0,
+    northRef: true,
+    vs: 0,
+    gridConv: 0,
+    declination: 0,
+    magField: 0,
+    dip: 0,
+    magModel: 'N/A',
+    magDate: new Date().toISOString().split('T')[0],
+    plugIn: null,
+    unplug: null,
+    timeIn: null,
+    timeOut: '',
+    depthIn: 0,
+    depthOut: 0,
+    circHrs: 0,
+    drillingHrs: 0,
+    brtHrs: 0,
+    motorFail: false,
+    mwdFail: false,
+    pooh: 'No data available',
+    mwdComments: 'No BHA data found',
+    pw: 0,
+    ssq: 0,
+    tfsq: 0,
+    crossover: 0,
+    gcf: 0,
+    dao: 0,
+    surfaceSystemVersion: 0,
+    svyOffset: 0,
+    gamOffset: 0,
+    stickup: 0,
+    retrievable: 0,
+    pinToSetScrew: 0,
+    probeOrder: 0,
+    itemizedBHA: 'No BHA data available',
+    mwdMake: '',
+    mwdModel: '',
+    ubhoSN: '0',
+    helixSN: '0',
+    helixType: '',
+    pulserSN: '0',
+    gammaSN: '0',
+    directionalSN: '',
+    batterySN: '0',
+    batterySN2: '0',
+    shockToolSN: '0',
+    lih: false,
+    stalls: 0,
+    npt: 0,
+    mwdCoordinator: '',
+    directionalCoordinator: '',
+    ddLead: '',
+    mwdLead: '',
+    pushTimeStamp: 'No data',
+    planName: '',
+    mwdDay: '',
+    mwdNight: '',
+    bhaDescription: 'No BHA data available',
+    apiNumber: '',
+    pulserVersion: 0,
+    mwdMinTemp: 0,
+    mwdMaxTemp: 0,
+    corrShockToolSN: '',
+    totalCirculatingHours: 0,
+    mudType: '',
+    mudWeight: '',
+    correctingMDG: '',
+    battery3: '0',
+    babelfishSN: '0',
+    muleShoe: '0',
+  };
 
   // Save overrides mutation
   const saveOverridesMutation = useMutation({
@@ -166,42 +259,23 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <XCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-          <p className="text-lg font-semibold mb-2">Failed to load dashboard data</p>
-          <p className="text-sm text-muted-foreground">{error instanceof Error ? error.message : 'Unknown error'}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!wellData) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-lg font-semibold mb-2">No well data available</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            {bhaRuns && bhaRuns.length === 0 
-              ? "No BHA runs found for this well" 
-              : "Unable to load dashboard data"}
-          </p>
-          {bhaRuns && bhaRuns.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              This well may not have any BHA headers configured in Well Seeker Pro
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-full overflow-auto bg-background">
       <div className="p-6 space-y-6">
+        {!wellData && (
+          <Card className="bg-yellow-50 border-yellow-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-yellow-600" />
+                <p className="text-sm text-yellow-800">
+                  No BHA data found for this well. Showing default values (0).
+                  {bhaRuns && bhaRuns.length === 0 && " This well may not have any BHA headers configured in Well Seeker Pro."}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Run # Selector */}
         <Card>
           <CardContent className="pt-6">
@@ -215,11 +289,17 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                     <SelectValue placeholder="Select run" />
                   </SelectTrigger>
                   <SelectContent>
-                    {bhaRuns?.map((run) => (
-                      <SelectItem key={run.id} value={run.id} data-testid={`option-run-${run.runNumber}`}>
-                        Run #{run.runNumber} (BHA #{run.bhaNumber}, MWD #{run.mwdNumber})
+                    {bhaRuns && bhaRuns.length > 0 ? (
+                      bhaRuns.map((run) => (
+                        <SelectItem key={run.id} value={run.id} data-testid={`option-run-${run.runNumber}`}>
+                          Run #{run.runNumber} (BHA #{run.bhaNumber}, MWD #{run.mwdNumber})
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value={`${wellId}-run-1`} data-testid="option-run-default">
+                        No runs available (showing default)
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -239,22 +319,22 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
 
         {/* Header Section */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold" data-testid="text-well-name">{wellData.well}</h1>
+          <h1 className="text-3xl font-bold" data-testid="text-well-name">{displayData.well}</h1>
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" data-testid="badge-operator">
               <Drill className="w-3 h-3 mr-1" />
-              {wellData.operator}
+              {displayData.operator}
             </Badge>
             <Badge variant="outline" data-testid="badge-rig">
               <Gauge className="w-3 h-3 mr-1" />
-              {wellData.rig}
+              {displayData.rig}
             </Badge>
             <Badge variant="outline" data-testid="badge-job">
-              Job: {wellData.jobNumber}
+              Job: {displayData.jobNumber}
             </Badge>
             <Badge variant="outline" data-testid="badge-section">
               <Layers className="w-3 h-3 mr-1" />
-              {wellData.section}
+              {displayData.section}
             </Badge>
           </div>
         </div>
@@ -270,20 +350,20 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
             <CardContent className="space-y-2">
               <div>
                 <p className="text-xs text-muted-foreground">County</p>
-                <p className="text-sm font-medium" data-testid="text-county">{wellData.county}</p>
+                <p className="text-sm font-medium" data-testid="text-county">{displayData.county || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">State</p>
-                <p className="text-sm font-medium" data-testid="text-state">{wellData.state}</p>
+                <p className="text-sm font-medium" data-testid="text-state">{displayData.state || 'N/A'}</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Latitude</p>
-                  <p className="text-xs font-mono" data-testid="text-lat">{wellData.lat.toFixed(6)}</p>
+                  <p className="text-xs font-mono" data-testid="text-lat">{displayData.lat.toFixed(6)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Longitude</p>
-                  <p className="text-xs font-mono" data-testid="text-long">{wellData.long.toFixed(6)}</p>
+                  <p className="text-xs font-mono" data-testid="text-long">{displayData.long.toFixed(6)}</p>
                 </div>
               </div>
             </CardContent>
@@ -299,31 +379,31 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-xs text-muted-foreground">VS</p>
-                  <p className="text-sm font-medium" data-testid="text-vs">{wellData.vs.toFixed(2)}</p>
+                  <p className="text-sm font-medium" data-testid="text-vs">{displayData.vs.toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Grid Conv</p>
-                  <p className="text-sm font-medium" data-testid="text-grid-conv">{wellData.gridConv.toFixed(6)}</p>
+                  <p className="text-sm font-medium" data-testid="text-grid-conv">{displayData.gridConv.toFixed(6)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Declination</p>
-                  <p className="text-sm font-medium" data-testid="text-declination">{wellData.declination.toFixed(2)}°</p>
+                  <p className="text-sm font-medium" data-testid="text-declination">{displayData.declination.toFixed(2)}°</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Dip</p>
-                  <p className="text-sm font-medium" data-testid="text-dip">{wellData.dip.toFixed(3)}°</p>
+                  <p className="text-sm font-medium" data-testid="text-dip">{displayData.dip.toFixed(3)}°</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-xs text-muted-foreground">Mag Field</p>
-                  <p className="text-sm font-medium" data-testid="text-mag-field">{wellData.magField.toFixed(3)} nT</p>
+                  <p className="text-sm font-medium" data-testid="text-mag-field">{displayData.magField.toFixed(3)} nT</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Mag Model</p>
-                  <p className="text-xs" data-testid="text-mag-model">{wellData.magModel}</p>
+                  <p className="text-xs" data-testid="text-mag-model">{displayData.magModel}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Mag Date</p>
-                  <p className="text-xs" data-testid="text-mag-date">{wellData.magDate}</p>
+                  <p className="text-xs" data-testid="text-mag-date">{displayData.magDate}</p>
                 </div>
               </div>
             </CardContent>
@@ -339,19 +419,19 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Depth In</p>
-                  <p className="text-sm font-medium" data-testid="text-depth-in">{wellData.depthIn.toLocaleString()} ft</p>
+                  <p className="text-sm font-medium" data-testid="text-depth-in">{displayData.depthIn.toLocaleString()} ft</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Depth Out</p>
-                  <p className="text-sm font-medium" data-testid="text-depth-out">{wellData.depthOut.toLocaleString()} ft</p>
+                  <p className="text-sm font-medium" data-testid="text-depth-out">{displayData.depthOut.toLocaleString()} ft</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Time Out</p>
-                  <p className="text-xs" data-testid="text-time-out">{wellData.timeOut}</p>
+                  <p className="text-xs" data-testid="text-time-out">{displayData.timeOut || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">BHA #</p>
-                  <p className="text-sm font-medium" data-testid="text-bha-num">{wellData.bhaNumber}</p>
+                  <p className="text-sm font-medium" data-testid="text-bha-num">{displayData.bhaNumber}</p>
                 </div>
               </div>
             </CardContent>
@@ -367,15 +447,15 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Drilling</p>
-                  <p className="text-lg font-bold" data-testid="text-drilling-hrs">{wellData.drillingHrs.toFixed(2)}</p>
+                  <p className="text-lg font-bold" data-testid="text-drilling-hrs">{displayData.drillingHrs.toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Circulating</p>
-                  <p className="text-lg font-bold" data-testid="text-circ-hrs">{wellData.circHrs.toFixed(2)}</p>
+                  <p className="text-lg font-bold" data-testid="text-circ-hrs">{displayData.circHrs.toFixed(2)}</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-xs text-muted-foreground">Total Circulating</p>
-                  <p className="text-sm font-medium" data-testid="text-total-circ-hrs">{wellData.totalCirculatingHours.toFixed(2)} hrs</p>
+                  <p className="text-sm font-medium" data-testid="text-total-circ-hrs">{displayData.totalCirculatingHours.toFixed(2)} hrs</p>
                 </div>
               </div>
             </CardContent>
@@ -390,8 +470,8 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Motor Fail</span>
-                <Badge variant={wellData.motorFail ? "destructive" : "success"} data-testid="badge-motor-fail">
-                  {wellData.motorFail ? (
+                <Badge variant={displayData.motorFail ? "destructive" : "success"} data-testid="badge-motor-fail">
+                  {displayData.motorFail ? (
                     <><XCircle className="w-3 h-3 mr-1" />Failed</>
                   ) : (
                     <><CheckCircle2 className="w-3 h-3 mr-1" />OK</>
@@ -400,8 +480,8 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">MWD Fail</span>
-                <Badge variant={wellData.mwdFail ? "destructive" : "success"} data-testid="badge-mwd-fail">
-                  {wellData.mwdFail ? (
+                <Badge variant={displayData.mwdFail ? "destructive" : "success"} data-testid="badge-mwd-fail">
+                  {displayData.mwdFail ? (
                     <><XCircle className="w-3 h-3 mr-1" />Failed</>
                   ) : (
                     <><CheckCircle2 className="w-3 h-3 mr-1" />OK</>
@@ -410,22 +490,22 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">LIH</span>
-                <Badge variant={wellData.lih ? "info" : "outline"} data-testid="badge-lih">
-                  {wellData.lih ? "Yes" : "No"}
+                <Badge variant={displayData.lih ? "info" : "outline"} data-testid="badge-lih">
+                  {displayData.lih ? "Yes" : "No"}
                 </Badge>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">POOH Reason</p>
-                <p className="text-xs" data-testid="text-pooh">{wellData.pooh}</p>
+                <p className="text-xs" data-testid="text-pooh">{displayData.pooh}</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Stalls</p>
-                  <p className="text-sm font-medium" data-testid="text-stalls">{wellData.stalls}</p>
+                  <p className="text-sm font-medium" data-testid="text-stalls">{displayData.stalls}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">NPT</p>
-                  <p className="text-sm font-medium" data-testid="text-npt">{wellData.npt}</p>
+                  <p className="text-sm font-medium" data-testid="text-npt">{displayData.npt}</p>
                 </div>
               </div>
             </CardContent>
@@ -440,16 +520,16 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
             <CardContent className="space-y-2">
               <div>
                 <p className="text-xs text-muted-foreground">DD Lead</p>
-                <p className="text-sm font-medium" data-testid="text-dd-lead">{wellData.ddLead || "N/A"}</p>
+                <p className="text-sm font-medium" data-testid="text-dd-lead">{displayData.ddLead || "N/A"}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Directional Coordinator</p>
-                <p className="text-sm font-medium" data-testid="text-dir-coord">{wellData.directionalCoordinator || "N/A"}</p>
+                <p className="text-sm font-medium" data-testid="text-dir-coord">{displayData.directionalCoordinator || "N/A"}</p>
               </div>
-              {wellData.mwdCoordinator && (
+              {displayData.mwdCoordinator && (
                 <div>
                   <p className="text-xs text-muted-foreground">MWD Coordinator</p>
-                  <p className="text-sm font-medium" data-testid="text-mwd-coord">{wellData.mwdCoordinator}</p>
+                  <p className="text-sm font-medium" data-testid="text-mwd-coord">{displayData.mwdCoordinator}</p>
                 </div>
               )}
             </CardContent>
@@ -471,7 +551,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* UBHO */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">UBHO</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-ubho-sn">{wellData.ubhoSNOverride || wellData.ubhoSN || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-ubho-sn">{displayData.ubhoSNOverride || displayData.ubhoSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.ubhoSNOverride || ""}
@@ -484,7 +564,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* Helix */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">Helix</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-helix-sn">{wellData.helixSNOverride || wellData.helixSN || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-helix-sn">{displayData.helixSNOverride || displayData.helixSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.helixSNOverride || ""}
@@ -497,7 +577,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* Pulser */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">Pulser</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-pulser-sn">{wellData.pulserSNOverride || wellData.pulserSN || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-pulser-sn">{displayData.pulserSNOverride || displayData.pulserSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.pulserSNOverride || ""}
@@ -510,7 +590,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* Gamma */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">Gamma</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-gamma-sn">{wellData.gammaSNOverride || wellData.gammaSN || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-gamma-sn">{displayData.gammaSNOverride || displayData.gammaSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.gammaSNOverride || ""}
@@ -523,7 +603,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* Directional */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">Directional</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-dir-sn">{wellData.directionalSNOverride || wellData.directionalSN || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-dir-sn">{displayData.directionalSNOverride || displayData.directionalSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.directionalSNOverride || ""}
@@ -536,7 +616,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* Battery 1 */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">Battery 1</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-battery-sn">{wellData.batterySNOverride || wellData.batterySN || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-battery-sn">{displayData.batterySNOverride || displayData.batterySN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.batterySNOverride || ""}
@@ -549,7 +629,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* Battery 2 */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">Battery 2</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-battery2-sn">{wellData.batterySN2Override || wellData.batterySN2 || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-battery2-sn">{displayData.batterySN2Override || displayData.batterySN2 || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.batterySN2Override || ""}
@@ -562,7 +642,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* Battery 3 */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">Battery 3</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-battery3-sn">{wellData.battery3Override || wellData.battery3 || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-battery3-sn">{displayData.battery3Override || displayData.battery3 || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.battery3Override || ""}
@@ -575,7 +655,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* Shock Tool */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">Shock Tool</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-shock-sn">{wellData.shockToolSNOverride || wellData.shockToolSN || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-shock-sn">{displayData.shockToolSNOverride || displayData.shockToolSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.shockToolSNOverride || ""}
@@ -588,7 +668,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* Babelfish */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">Babelfish</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-babelfish-sn">{wellData.babelfishSNOverride || wellData.babelfishSN || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-babelfish-sn">{displayData.babelfishSNOverride || displayData.babelfishSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.babelfishSNOverride || ""}
@@ -601,7 +681,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 {/* MuleShoe */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium w-28">MuleShoe</Label>
-                  <div className="flex-1 text-sm font-mono" data-testid="text-muleshoe-sn">{wellData.muleShoeOverride || wellData.muleShoe || "N/A"}</div>
+                  <div className="flex-1 text-sm font-mono" data-testid="text-muleshoe-sn">{displayData.muleShoeOverride || displayData.muleShoe || "N/A"}</div>
                   <Input
                     placeholder="N/N"
                     value={overrides.muleShoeOverride || ""}
@@ -624,43 +704,43 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-xs text-muted-foreground">PW</p>
-                <p className="text-sm font-medium" data-testid="text-pw">{wellData.pw}</p>
+                <p className="text-sm font-medium" data-testid="text-pw">{displayData.pw}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">SSQ</p>
-                <p className="text-sm font-medium" data-testid="text-ssq">{wellData.ssq}</p>
+                <p className="text-sm font-medium" data-testid="text-ssq">{displayData.ssq}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">TFSQ</p>
-                <p className="text-sm font-medium" data-testid="text-tfsq">{wellData.tfsq}</p>
+                <p className="text-sm font-medium" data-testid="text-tfsq">{displayData.tfsq}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">GCF</p>
-                <p className="text-sm font-medium" data-testid="text-gcf">{wellData.gcf}</p>
+                <p className="text-sm font-medium" data-testid="text-gcf">{displayData.gcf}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Svy Offset</p>
-                <p className="text-sm font-medium" data-testid="text-svy-offset">{wellData.svyOffset}</p>
+                <p className="text-sm font-medium" data-testid="text-svy-offset">{displayData.svyOffset}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Gam Offset</p>
-                <p className="text-sm font-medium" data-testid="text-gam-offset">{wellData.gamOffset}</p>
+                <p className="text-sm font-medium" data-testid="text-gam-offset">{displayData.gamOffset}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Stickup</p>
-                <p className="text-sm font-medium" data-testid="text-stickup">{wellData.stickup}</p>
+                <p className="text-sm font-medium" data-testid="text-stickup">{displayData.stickup}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Pulser Version</p>
-                <p className="text-sm font-medium" data-testid="text-pulser-version">{wellData.pulserVersion}</p>
+                <p className="text-sm font-medium" data-testid="text-pulser-version">{displayData.pulserVersion}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">MWD Min Temp</p>
-                <p className="text-sm font-medium" data-testid="text-min-temp">{wellData.mwdMinTemp}°</p>
+                <p className="text-sm font-medium" data-testid="text-min-temp">{displayData.mwdMinTemp}°</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">MWD Max Temp</p>
-                <p className="text-sm font-medium" data-testid="text-max-temp">{wellData.mwdMaxTemp}°</p>
+                <p className="text-sm font-medium" data-testid="text-max-temp">{displayData.mwdMaxTemp}°</p>
               </div>
             </div>
           </CardContent>
@@ -675,21 +755,21 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
             <div className="space-y-2">
               <div>
                 <p className="text-xs text-muted-foreground">Description</p>
-                <p className="text-sm font-medium" data-testid="text-bha-desc">{wellData.bhaDescription}</p>
+                <p className="text-sm font-medium" data-testid="text-bha-desc">{displayData.bhaDescription}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Itemized BHA</p>
-                <p className="text-sm font-medium" data-testid="text-itemized-bha">{wellData.itemizedBHA}</p>
+                <p className="text-sm font-medium" data-testid="text-itemized-bha">{displayData.itemizedBHA}</p>
               </div>
-              {wellData.mwdMake && (
+              {displayData.mwdMake && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-muted-foreground">MWD Make</p>
-                    <p className="text-sm font-medium" data-testid="text-mwd-make">{wellData.mwdMake}</p>
+                    <p className="text-sm font-medium" data-testid="text-mwd-make">{displayData.mwdMake}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">MWD Model</p>
-                    <p className="text-sm font-medium" data-testid="text-mwd-model">{wellData.mwdModel}</p>
+                    <p className="text-sm font-medium" data-testid="text-mwd-model">{displayData.mwdModel}</p>
                   </div>
                 </div>
               )}

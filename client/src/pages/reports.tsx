@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  FileSpreadsheet, 
+import {
+  FileSpreadsheet,
   Download,
   Activity,
   Shield,
@@ -74,14 +74,15 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
 
   // Fetch BHA runs for selected well
   const { data: bhaRuns } = useQuery<BHARun[]>({
-    queryKey: ["/api/bha-runs", wellId],
+    queryKey: ["/api/bha-runs", selectedWellId],
     queryFn: async () => {
-      if (!wellId || wellId.trim() === "") throw new Error("Invalid well ID");
-      const response = await fetch(`/api/bha-runs/${wellId}`, { credentials: "include" });
+      if (!selectedWellId || selectedWellId.trim() === "") throw new Error("Invalid well ID");
+      const response = await fetch(`/api/bha-runs/${selectedWellId}`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch BHA runs");
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
-    enabled: !!wellId && wellId.trim() !== "",
+    enabled: !!selectedWellId && selectedWellId.trim() !== "",
   });
 
   // Generate Excel file for a component
@@ -190,6 +191,18 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
     { name: "Babelfish", icon: Activity, type: "babelfish" },
   ];
 
+  // Default empty report data if well data is missing
+  const defaultReportData = {
+    dateOfActivity: new Date().toLocaleDateString(),
+    drivrNumber: "0",
+    projectJobNum: "N/A",
+    runNum: 0,
+    circulatingHours: 0,
+    edt: 0,
+    personUpdatingActivity: "",
+    comments: "No data available",
+  };
+
   return (
     <div className="h-full overflow-auto bg-background">
       <div className="p-6 space-y-6">
@@ -228,8 +241,8 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="run-select">Run #</Label>
-                <Select 
-                  value={runId} 
+                <Select
+                  value={selectedRunId}
                   onValueChange={(value) => {
                     setSelectedRunId(value);
                     setLocation(`/reports?wellId=${wellId}&runId=${value}`);
@@ -240,11 +253,17 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
                     <SelectValue placeholder="Select run" />
                   </SelectTrigger>
                   <SelectContent>
-                    {bhaRuns?.map((run) => (
-                      <SelectItem key={run.id} value={run.id} data-testid={`option-run-${run.runNumber}`}>
-                        Run #{run.runNumber} (BHA #{run.bhaNumber}, MWD #{run.mwdNumber})
+                    {bhaRuns && bhaRuns.length > 0 ? (
+                      bhaRuns.map((run) => (
+                        <SelectItem key={run.id} value={run.id} data-testid={`option-run-${run.runNumber}`}>
+                          Run #{run.runNumber} (BHA #{run.bhaNumber}, MWD #{run.mwdNumber})
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-runs" disabled>
+                        No runs available
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
               </div>
