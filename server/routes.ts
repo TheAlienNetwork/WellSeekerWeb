@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import session from "express-session";
-import type { WellSeekerAuthRequest, WellSeekerAuthResponse, Well, WellDetails, BHAComponent, DrillingParameters, ToolComponent } from "@shared/schema";
+import type { WellSeekerAuthResponse, Well, WellDetails, BHAComponent, DrillingParameters, ToolComponent } from "@shared/schema";
 
 // Extend session data type
 declare module 'express-session' {
@@ -39,7 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Session ID:", req.sessionID);
     console.log("Session data:", JSON.stringify(req.session, null, 2));
     console.log("Session wellSeekerToken exists:", !!req.session.wellSeekerToken);
-    
+
     // Use session token if available
     if (req.session.wellSeekerToken) {
       console.log("Using Well Seeker token from session");
@@ -161,29 +161,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const authData: any = await authResponse.json();
 
-      console.log("Auth response data:", JSON.stringify(authData, null, 2));
-      console.log("Available keys in authData:", Object.keys(authData));
-
-      // Check if the API returned an error (even with HTTP 200)
-      if (authData.error || authData.error_description) {
-        console.error("Authentication error from API:", authData.error, authData.error_description);
-        return res.status(401).json({ 
-          error: authData.error_description || "Invalid Well Seeker Pro credentials" 
-        });
-      }
+      console.log("Auth response keys:", Object.keys(authData));
+      console.log("Has access_token:", !!authData.access_token);
+      console.log("Token length:", authData.access_token?.length);
 
       // Extract token - the API returns it as 'access_token'
       const token = authData.access_token;
-      
+
+      // Check if we have a valid token (non-empty string)
       if (!token || token === '') {
-        console.error("No valid access_token in auth response! Keys:", Object.keys(authData));
-        console.error("Full auth response:", authData);
-        return res.status(401).json({ error: "Authentication failed - no token received" });
+        console.error("Authentication failed - no valid token received");
+        console.error("Error from API:", authData.error, authData.error_description);
+        return res.status(401).json({ 
+          error: authData.error_description || "Invalid Peeker credentials" 
+        });
       }
 
       console.log("Authentication successful for:", email);
-      console.log("Token received, length:", token.length);
-
       console.log("Token received, length:", token.length);
 
       // Store credentials and tokens in session
@@ -528,7 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const paginatedWells = wells.slice(startIndex, endIndex);
 
       console.log(`Successfully fetched ${total} wells, returning page ${page} (${paginatedWells.length} items)`);
-      
+
       res.json({
         wells: paginatedWells,
         pagination: {
