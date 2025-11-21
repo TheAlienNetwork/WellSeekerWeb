@@ -1038,11 +1038,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? wellsData.find(w => String(w.id) === wellId || String(w.jobNum) === wellId)
         : null;
 
-      if (!selectedWell || !selectedWell.actualWell) {
-        throw new Error("Well not found or actualWell name missing");
+      if (!selectedWell) {
+        throw new Error("Well not found");
       }
 
-      const wellName = selectedWell.actualWell;
+      const wellName = selectedWell.actualWell || selectedWell.wellName || selectedWell.name || String(wellId);
 
       // Call getWellInfo endpoint
       const wellInfoResponse = await fetch("https://www.icpwebportal.com/api/well/wellInfo/getWellInfo", {
@@ -1126,11 +1126,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? wellsData.find(w => String(w.id) === wellId || String(w.jobNum) === wellId)
         : null;
 
-      if (!selectedWell || !selectedWell.actualWell) {
-        throw new Error("Well not found or actualWell name missing");
+      if (!selectedWell) {
+        throw new Error("Well not found");
       }
 
-      const wellName = selectedWell.actualWell;
+      const wellName = selectedWell.actualWell || selectedWell.wellName || selectedWell.name || String(wellId);
 
       // Call getBha endpoint with wellName and bhaNum
       const bhaResponse = await fetch("https://www.icpwebportal.com/api/well/drillString/getBha", {
@@ -1211,11 +1211,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? wellsData.find(w => String(w.id) === wellId || String(w.jobNum) === wellId)
         : null;
 
-      if (!selectedWell || !selectedWell.actualWell) {
-        throw new Error("Well not found or actualWell name missing");
+      if (!selectedWell) {
+        throw new Error("Well not found");
       }
 
-      const wellName = selectedWell.actualWell;
+      const wellName = selectedWell.actualWell || selectedWell.wellName || selectedWell.name || String(wellId);
 
       // Call getBhaHeaders to get drilling parameters
       const headersResponse = await fetch("https://www.icpwebportal.com/api/well/drillString/getBhaHeaders", {
@@ -1303,11 +1303,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? wellsData.find(w => String(w.id) === wellId || String(w.jobNum) === wellId)
         : null;
 
-      if (!selectedWell || !selectedWell.actualWell) {
+      if (!selectedWell) {
         return res.json([0]);
       }
 
-      const wellName = selectedWell.actualWell;
+      const wellName = selectedWell.actualWell || selectedWell.wellName || selectedWell.name || String(wellId);
 
       // Call getBhaHeaders to get all BHA runs
       const headersResponse = await fetch("https://www.icpwebportal.com/api/well/drillString/getBhaHeaders", {
@@ -1378,11 +1378,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? wellsData.find(w => String(w.id) === wellId || String(w.jobNum) === wellId)
         : null;
 
-      if (!selectedWell || !selectedWell.actualWell) {
-        throw new Error("Well not found or actualWell name missing");
+      if (!selectedWell) {
+        throw new Error("Well not found");
       }
 
-      const wellName = selectedWell.actualWell;
+      const wellName = selectedWell.actualWell || selectedWell.wellName || selectedWell.name || String(wellId);
 
       // Call getBha endpoint to get tool component data
       const bhaResponse = await fetch("https://www.icpwebportal.com/api/well/drillString/getBha", {
