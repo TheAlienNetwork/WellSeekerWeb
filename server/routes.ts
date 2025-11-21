@@ -371,12 +371,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? wellsData.find(w => String(w.id) === wellId || String(w.jobNum) === wellId)
         : null;
 
-      if (!selectedWell || !selectedWell.actualWell) {
-        console.log("Well not found or actualWell name missing");
+      if (!selectedWell) {
+        console.log("Well not found");
         return res.status(404).json({ error: "Well not found" });
       }
 
-      const wellName = selectedWell.actualWell;
+      const wellName = selectedWell.actualWell || selectedWell.wellName || selectedWell.name || String(wellId);
       console.log(`Fetching BHA headers for well: ${wellName} (ID: ${wellId})`);
 
       // Call getBhaHeaders to get all BHA runs
