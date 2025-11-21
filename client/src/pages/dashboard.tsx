@@ -26,7 +26,15 @@ import {
   Calendar,
   Gauge,
   Layers,
-  Save
+  Save,
+  Compass,
+  TrendingDown,
+  TrendingUp,
+  Activity,
+  Thermometer,
+  Wrench,
+  Hash,
+  Settings
 } from "lucide-react";
 import {
   Table,
@@ -242,7 +250,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
           <Card data-testid="card-location">
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Location</CardTitle>
-              <MapPin className="w-4 h-4 text-muted-foreground" />
+              <MapPin className="w-4 h-4 text-destructive" />
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
@@ -270,7 +278,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
           <Card data-testid="card-navigation">
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Navigation & Survey</CardTitle>
-              <Gauge className="w-4 h-4 text-muted-foreground" />
+              <Compass className="w-4 h-4 text-info" />
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
@@ -310,7 +318,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
           <Card data-testid="card-depth-time">
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Depth & Time</CardTitle>
-              <Clock className="w-4 h-4 text-muted-foreground" />
+              <TrendingDown className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
@@ -338,7 +346,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
           <Card data-testid="card-hours">
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Hours Metrics</CardTitle>
-              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <Activity className="w-4 h-4 text-warning" />
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
@@ -362,12 +370,12 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
           <Card data-testid="card-status">
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Status</CardTitle>
-              <AlertCircle className="w-4 h-4 text-muted-foreground" />
+              <Settings className="w-4 h-4 text-success" />
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Motor Fail</span>
-                <Badge variant={wellData.motorFail ? "destructive" : "outline"} data-testid="badge-motor-fail">
+                <Badge variant={wellData.motorFail ? "destructive" : "success"} data-testid="badge-motor-fail">
                   {wellData.motorFail ? (
                     <><XCircle className="w-3 h-3 mr-1" />Failed</>
                   ) : (
@@ -377,7 +385,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">MWD Fail</span>
-                <Badge variant={wellData.mwdFail ? "destructive" : "outline"} data-testid="badge-mwd-fail">
+                <Badge variant={wellData.mwdFail ? "destructive" : "success"} data-testid="badge-mwd-fail">
                   {wellData.mwdFail ? (
                     <><XCircle className="w-3 h-3 mr-1" />Failed</>
                   ) : (
@@ -387,7 +395,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">LIH</span>
-                <Badge variant={wellData.lih ? "default" : "outline"} data-testid="badge-lih">
+                <Badge variant={wellData.lih ? "info" : "outline"} data-testid="badge-lih">
                   {wellData.lih ? "Yes" : "No"}
                 </Badge>
               </div>
@@ -412,7 +420,7 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
           <Card data-testid="card-personnel">
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Personnel</CardTitle>
-              <Users className="w-4 h-4 text-muted-foreground" />
+              <Users className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
@@ -435,8 +443,12 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
 
         {/* Equipment Serial Numbers Table with Override Inputs */}
         <Card data-testid="card-equipment">
-          <CardHeader>
-            <CardTitle>Equipment Serial Numbers</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="w-5 h-5 text-primary" />
+              Equipment Serial Numbers
+            </CardTitle>
+            <Hash className="w-5 h-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
