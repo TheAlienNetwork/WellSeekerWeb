@@ -319,7 +319,11 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
 
         {/* Header Section */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold" data-testid="text-well-name">{displayData.well}</h1>
+          <div className="flex items-center gap-3">
+            <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-400/30 px-3 py-1.5 font-mono text-lg" data-testid="badge-well-name">
+              {displayData.well}
+            </Badge>
+          </div>
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" data-testid="badge-operator">
               <Drill className="w-3 h-3 mr-1" />
@@ -456,6 +460,21 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 <div className="col-span-2">
                   <p className="text-xs text-muted-foreground">Total Circulating</p>
                   <p className="text-sm font-medium" data-testid="text-total-circ-hrs">{displayData.totalCirculatingHours.toFixed(2)} hrs</p>
+                </div>
+                <div className="col-span-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="edt-hrs" className="text-xs text-muted-foreground">EDT Hrs</Label>
+                    <Input
+                      id="edt-hrs"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={overrides['edtHrs'] || ''}
+                      onChange={(e) => setOverrides({...overrides, edtHrs: e.target.value})}
+                      className="h-7 text-sm"
+                      data-testid="input-edt-hrs"
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>

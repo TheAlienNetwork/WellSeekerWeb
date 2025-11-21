@@ -5,18 +5,37 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { surveyStationSchema, type SurveyStationInput } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Calendar, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Calendar, AlertCircle, CheckCircle2, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface MWDSurveyStationPageProps {
   selectedWell?: { id: string; actualWell: string } | null;
 }
 
+interface SurveyRecord {
+  id: string;
+  date: string;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+  model: string;
+}
+
 export default function MWDSurveyStationPage({ selectedWell }: MWDSurveyStationPageProps) {
   const { toast } = useToast();
+  const [surveys, setSurveys] = useState<SurveyRecord[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
   const form = useForm<SurveyStationInput>({
@@ -42,8 +61,31 @@ export default function MWDSurveyStationPage({ selectedWell }: MWDSurveyStationP
         description: "Survey station data submitted successfully",
         variant: "default",
       });
+      
+      const latVal = form.getValues("latitude");
+      const longVal = form.getValues("longitude");
+      const altVal = form.getValues("altitudeMeters");
+      const dateVal = form.getValues("date");
+      const modelVal = form.getValues("model");
+      
+      setSurveys([...surveys, {
+        id: Date.now().toString(),
+        date: dateVal,
+        latitude: latVal,
+        longitude: longVal,
+        altitude: altVal,
+        model: modelVal,
+      }]);
+      
       setSubmitted(true);
-      form.reset();
+      form.reset({
+        wellName: selectedWell?.actualWell || "",
+        latitude: 0,
+        longitude: 0,
+        altitudeMeters: 0,
+        date: new Date().toISOString().split("T")[0],
+        model: "WGS84",
+      });
       setTimeout(() => setSubmitted(false), 3000);
     },
     onError: (error) => {
@@ -59,6 +101,14 @@ export default function MWDSurveyStationPage({ selectedWell }: MWDSurveyStationP
     mutation.mutate(data);
   };
 
+  const deleteSurvey = (id: string) => {
+    setSurveys(surveys.filter(s => s.id !== id));
+    toast({
+      title: "Removed",
+      description: "Survey station removed from table",
+    });
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="space-y-2">
@@ -66,7 +116,7 @@ export default function MWDSurveyStationPage({ selectedWell }: MWDSurveyStationP
           MWD Survey Station
         </h1>
         <p className="text-muted-foreground">
-          Enter magnetic survey station data for calibration and positioning
+          Record magnetic survey stations for well calibration and positioning
         </p>
       </div>
 
@@ -79,10 +129,7 @@ export default function MWDSurveyStationPage({ selectedWell }: MWDSurveyStationP
               name="wellName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Well Name
-                  </FormLabel>
+                  <FormLabel>Well Name</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Enter well name"
@@ -211,37 +258,79 @@ export default function MWDSurveyStationPage({ selectedWell }: MWDSurveyStationP
                 disabled={mutation.isPending}
                 data-testid="button-submit-survey"
               >
-                {mutation.isPending ? "Submitting..." : "Submit Survey Station"}
+                <Plus className="w-4 h-4 mr-2" />
+                {mutation.isPending ? "Submitting..." : "Add Survey Station"}
               </Button>
               {submitted && (
                 <div className="flex items-center gap-2 text-success">
                   <CheckCircle2 className="h-5 w-5" />
-                  <span className="text-sm font-medium">Submitted successfully</span>
+                  <span className="text-sm font-medium">Added successfully</span>
                 </div>
               )}
             </div>
           </form>
         </Form>
-
-        {mutation.isError && (
-          <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md flex items-center gap-2 text-destructive">
-            <AlertCircle className="h-5 w-5 flex-shrink-0" />
-            <span>{mutation.error instanceof Error ? mutation.error.message : "An error occurred"}</span>
-          </div>
-        )}
       </Card>
 
-      <Card className="p-4 bg-muted">
-        <div className="space-y-2">
-          <h3 className="font-semibold text-sm">Station Information</h3>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Latitude/Longitude: Geographic coordinates (decimal degrees)</li>
-            <li>• Altitude: Elevation in meters above sea level</li>
-            <li>• Date: Date of survey station measurement</li>
-            <li>• Model: Magnetic field model used for reference</li>
-          </ul>
-        </div>
-      </Card>
+      {/* Survey Stations Table */}
+      {surveys.length > 0 && (
+        <Card data-testid="card-survey-table">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>Survey Stations</span>
+              <Badge variant="secondary">{surveys.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Date</TableHead>
+                    <TableHead className="text-xs">Latitude</TableHead>
+                    <TableHead className="text-xs">Longitude</TableHead>
+                    <TableHead className="text-xs">Altitude (m)</TableHead>
+                    <TableHead className="text-xs">Model</TableHead>
+                    <TableHead className="text-xs w-10">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {surveys.map((survey) => (
+                    <TableRow key={survey.id} data-testid={`row-survey-${survey.id}`}>
+                      <TableCell className="text-xs font-mono">{survey.date}</TableCell>
+                      <TableCell className="text-xs font-mono">{survey.latitude.toFixed(6)}</TableCell>
+                      <TableCell className="text-xs font-mono">{survey.longitude.toFixed(6)}</TableCell>
+                      <TableCell className="text-xs font-mono">{survey.altitude.toFixed(2)}</TableCell>
+                      <TableCell className="text-xs">{survey.model}</TableCell>
+                      <TableCell className="text-xs">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => deleteSurvey(survey.id)}
+                          data-testid={`button-delete-survey-${survey.id}`}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {surveys.length === 0 && (
+        <Card className="bg-muted/50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <AlertCircle className="h-5 w-5" />
+              <p className="text-sm">No survey stations added yet. Add one above to get started.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
