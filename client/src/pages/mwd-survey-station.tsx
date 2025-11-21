@@ -33,10 +33,8 @@ export default function MWDSurveyStationPage({ selectedWell }: MWDSurveyStationP
 
   const mutation = useMutation({
     mutationFn: async (data: SurveyStationInput) => {
-      return await apiRequest("/api/survey-station", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest("POST", "/api/survey-station", data);
+      return response.json();
     },
     onSuccess: () => {
       toast({

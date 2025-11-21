@@ -468,11 +468,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? wellsData.find(w => String(w.id) === String(wellId) || String(w.jobNum) === String(wellId))
         : null;
 
-      if (!selectedWell || !selectedWell.actualWell) {
+      if (!selectedWell) {
         return res.status(404).json({ error: "Well not found" });
       }
 
-      const wellName = selectedWell.actualWell;
+      // Try to get well name from multiple possible fields
+      const wellName = selectedWell.actualWell || selectedWell.wellName || selectedWell.name || String(wellId);
+      
+      if (!wellName) {
+        return res.status(404).json({ error: "Could not determine well name" });
+      }
 
       // Parse BHA number from runId - support both formats: "wellId-run-X" and direct BHA numbers
       let bhaNumber: string;
