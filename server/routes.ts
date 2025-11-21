@@ -35,6 +35,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper function to get Well Seeker Pro auth token
   async function getWellSeekerToken(req: any): Promise<string> {
+    // Debug session data
+    console.log("Session ID:", req.sessionID);
+    console.log("Session data:", JSON.stringify(req.session, null, 2));
+    console.log("Session wellSeekerToken exists:", !!req.session.wellSeekerToken);
+    
     // Use session token if available
     if (req.session.wellSeekerToken) {
       console.log("Using Well Seeker token from session");
@@ -154,9 +159,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid Well Seeker Pro credentials" });
       }
 
-      const authData: WellSeekerAuthResponse = await authResponse.json();
+      const authData: any = await authResponse.json();
 
       console.log("Authentication successful for:", email);
+      console.log("Auth response data:", JSON.stringify(authData, null, 2));
+      console.log("Available keys in authData:", Object.keys(authData));
+
+      // Extract token - try different possible property names
+      const token = authData.access_token || authData.token || authData.Token || authData.accessToken;
+      
+      if (!token) {
+        console.error("No token found in auth response! Keys:", Object.keys(authData));
+        return res.status(500).json({ error: "Authentication succeeded but no token received from Well Seeker Pro API" });
+      }
+
+      console.log("Token length:", token.length);
 
       // Store credentials and tokens in session
       req.session.userId = email;
@@ -166,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: password,
         productKey: productKey
       };
-      req.session.wellSeekerToken = authData.access_token;
+      req.session.wellSeekerToken = token;
 
       // Store refresh token if available
       if (authData.refresh_token) {
