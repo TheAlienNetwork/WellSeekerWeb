@@ -237,3 +237,44 @@ export const surveyStationSchema = z.object({
 });
 
 export type SurveyStationInput = z.infer<typeof surveyStationSchema>;
+
+export interface MWDSurvey {
+  survey: string;
+  actualWell: string;
+  crs: string;
+  ipm: string;
+  surveyTableName: string;
+  locked: boolean;
+  inUse: string[] | null;
+  tieOn?: {
+    inputMeth: string;
+    parentTieOn: string;
+    tieOn: {
+      md: number;
+      cl: number;
+      inc: number;
+      azi: number;
+      tvd: number;
+      tvdSs: number;
+      ns: number;
+      ew: number;
+      gridNorth: number;
+      gridEast: number;
+      vs: number;
+      dls: number;
+      br: number;
+      tr: number;
+      tf: number;
+      latDeg: number;
+      longDeg: number;
+      latitude: string;
+      longitude: string;
+      ud: number;
+      lr: number;
+      dist: number;
+    };
+    depthFrom: number;
+    depthTo: number;
+    parentSurveyWell: string;
+  };
+}

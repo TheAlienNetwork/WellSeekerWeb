@@ -1437,6 +1437,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // MWD Surveys endpoint
+  app.get("/api/surveys/:wellId", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { wellId } = req.params;
+
+      // Get the well details to find the actualWell name
+      const token = await getWellSeekerToken(req);
+      const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
+
+      const wellsResponse = await fetch("https://www.icpwebportal.com/api/wells", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          productKey: productKey,
+          getFootage: 'true',
+          databaseOrg: ''
+        }).toString(),
+      });
+
+      if (!wellsResponse.ok) {
+        throw new Error("Failed to fetch wells list");
+      }
+
+      const wellsData = await wellsResponse.json();
+      
+      // Extract jobNum from wellId if it's in format "job-{jobNum}-{index}"
+      let wellIdToMatch = String(wellId);
+      let jobNumToMatch = '';
+      if (wellIdToMatch.startsWith('job-')) {
+        const parts = wellIdToMatch.split('-');
+        if (parts.length >= 3) {
+          jobNumToMatch = parts.slice(1, parts.length - 1).join('-');
+        }
+      }
+      
+      const selectedWell = Array.isArray(wellsData) 
+        ? wellsData.find(w => {
+            const wId = String(w.id || '');
+            const wJobNum = String(w.jobNum || '');
+            const wActual = String(w.actualWell || '');
+            
+            return wId === wellIdToMatch || 
+                   wJobNum === wellIdToMatch || 
+                   wActual === wellIdToMatch ||
+                   (jobNumToMatch && (wJobNum === jobNumToMatch || wId.includes(jobNumToMatch)));
+          })
+        : null;
+
+      if (!selectedWell) {
+        throw new Error("Well not found");
+      }
+
+      const wellName = selectedWell.actualWell || selectedWell.wellName || selectedWell.name || String(wellId);
+
+      // Call getSurveys endpoint to get survey data
+      const surveysResponse = await fetch("https://www.icpwebportal.com/api/survey/getSurveys", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          wellName: wellName,
+          productKey: productKey
+        }).toString(),
+      });
+
+      if (!surveysResponse.ok) {
+        console.warn(`Failed to fetch surveys (${surveysResponse.status}), returning empty array`);
+        return res.json([]);
+      }
+
+      const surveys = await surveysResponse.json();
+      console.log(`Fetched ${Array.isArray(surveys) ? surveys.length : 0} surveys for well: ${wellName}`);
+      
+      res.json(Array.isArray(surveys) ? surveys : []);
+    } catch (error) {
+      console.error("Error fetching surveys:", error);
+      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch surveys" });
+    }
+  });
+
   app.get("/api/wells/:wellId/tool-components", async (req, res) => {
     try {
       if (!req.session.userId) {
