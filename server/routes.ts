@@ -165,15 +165,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Auth response data:", JSON.stringify(authData, null, 2));
       console.log("Available keys in authData:", Object.keys(authData));
 
-      // Extract token - try different possible property names
-      const token = authData.access_token || authData.token || authData.Token || authData.accessToken;
+      // Extract token - the API returns it as 'access_token'
+      const token = authData.access_token;
       
       if (!token) {
-        console.error("No token found in auth response! Keys:", Object.keys(authData));
+        console.error("No access_token found in auth response! Keys:", Object.keys(authData));
+        console.error("Full auth response:", authData);
         return res.status(500).json({ error: "Authentication succeeded but no token received from Well Seeker Pro API" });
       }
 
-      console.log("Token length:", token.length);
+      console.log("Token received, length:", token.length);
 
       // Store credentials and tokens in session
       req.session.userId = email;
