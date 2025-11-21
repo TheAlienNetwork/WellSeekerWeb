@@ -613,7 +613,20 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* UBHO */}
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium w-28">UBHO</Label>
+                  <div className="flex items-center gap-1 w-28">
+                    <Label className="text-sm font-medium">UBHO</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-ubho-info" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs max-w-xs">
+                        <p className="font-semibold mb-1">SelectedBHA</p>
+                        <p className="text-xs mb-2">/well/drillString/getBha</p>
+                        <p className="text-xs mb-1">wellName | bhaNum</p>
+                        <p className="text-xs">Match Type: MWD/LWD</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <div className="flex-1 text-sm font-mono" data-testid="text-ubho-sn">{displayData.ubhoSNOverride || displayData.ubhoSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
@@ -626,7 +639,20 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 
                 {/* Helix */}
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium w-28">Helix</Label>
+                  <div className="flex items-center gap-1 w-28">
+                    <Label className="text-sm font-medium">Helix</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-helix-info" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs max-w-xs">
+                        <p className="font-semibold mb-1">SelectedBHA</p>
+                        <p className="text-xs mb-2">/well/drillString/getBha</p>
+                        <p className="text-xs mb-1">wellName | bhaNum</p>
+                        <p className="text-xs">Match Type: MWD/LWD</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <div className="flex-1 text-sm font-mono" data-testid="text-helix-sn">{displayData.helixSNOverride || displayData.helixSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
@@ -639,7 +665,20 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
 
                 {/* Pulser */}
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium w-28">Pulser</Label>
+                  <div className="flex items-center gap-1 w-28">
+                    <Label className="text-sm font-medium">Pulser</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-pulser-info" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs max-w-xs">
+                        <p className="font-semibold mb-1">SelectedBHA</p>
+                        <p className="text-xs mb-2">/well/drillString/getBha</p>
+                        <p className="text-xs mb-1">wellName | bhaNum</p>
+                        <p className="text-xs">Match Type: MWD/LWD</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <div className="flex-1 text-sm font-mono" data-testid="text-pulser-sn">{displayData.pulserSNOverride || displayData.pulserSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
@@ -652,7 +691,20 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
 
                 {/* Gamma */}
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium w-28">Gamma</Label>
+                  <div className="flex items-center gap-1 w-28">
+                    <Label className="text-sm font-medium">Gamma</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-gamma-info" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs max-w-xs">
+                        <p className="font-semibold mb-1">SelectedBHA</p>
+                        <p className="text-xs mb-2">/well/drillString/getBha</p>
+                        <p className="text-xs mb-1">wellName | bhaNum</p>
+                        <p className="text-xs">Match Type: MWD/LWD</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <div className="flex-1 text-sm font-mono" data-testid="text-gamma-sn">{displayData.gammaSNOverride || displayData.gammaSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
@@ -665,7 +717,20 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
 
                 {/* Directional */}
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium w-28">Directional</Label>
+                  <div className="flex items-center gap-1 w-28">
+                    <Label className="text-sm font-medium">Directional</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-directional-info" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs max-w-xs">
+                        <p className="font-semibold mb-1">SelectedBHA</p>
+                        <p className="text-xs mb-2">/well/drillString/getBha</p>
+                        <p className="text-xs mb-1">wellName | bhaNum</p>
+                        <p className="text-xs">Match Type: MWD/LWD</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <div className="flex-1 text-sm font-mono" data-testid="text-dir-sn">{displayData.directionalSNOverride || displayData.directionalSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
@@ -678,7 +743,20 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
 
                 {/* Battery 1 */}
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium w-28">Battery 1</Label>
+                  <div className="flex items-center gap-1 w-28">
+                    <Label className="text-sm font-medium">Battery 1</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-battery1-info" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs max-w-xs">
+                        <p className="font-semibold mb-1">SelectedBHA</p>
+                        <p className="text-xs mb-2">/well/drillString/getBha</p>
+                        <p className="text-xs mb-1">wellName | bhaNum</p>
+                        <p className="text-xs">Match Type: MWD/LWD</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <div className="flex-1 text-sm font-mono" data-testid="text-battery-sn">{displayData.batterySNOverride || displayData.batterySN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
@@ -691,7 +769,20 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
 
                 {/* Battery 2 */}
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium w-28">Battery 2</Label>
+                  <div className="flex items-center gap-1 w-28">
+                    <Label className="text-sm font-medium">Battery 2</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-battery2-info" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs max-w-xs">
+                        <p className="font-semibold mb-1">SelectedBHA</p>
+                        <p className="text-xs mb-2">/well/drillString/getBha</p>
+                        <p className="text-xs mb-1">wellName | bhaNum</p>
+                        <p className="text-xs">Match Type: MWD/LWD</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <div className="flex-1 text-sm font-mono" data-testid="text-battery2-sn">{displayData.batterySN2Override || displayData.batterySN2 || "N/A"}</div>
                   <Input
                     placeholder="N/N"
@@ -717,7 +808,20 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
 
                 {/* Shock Tool */}
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium w-28">Shock Tool</Label>
+                  <div className="flex items-center gap-1 w-28">
+                    <Label className="text-sm font-medium">Shock Tool</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-shock-info" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs max-w-xs">
+                        <p className="font-semibold mb-1">SelectedBHA</p>
+                        <p className="text-xs mb-2">/well/drillString/getBha</p>
+                        <p className="text-xs mb-1">wellName | bhaNum</p>
+                        <p className="text-xs">Match Type: MWD/LWD</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <div className="flex-1 text-sm font-mono" data-testid="text-shock-sn">{displayData.shockToolSNOverride || displayData.shockToolSN || "N/A"}</div>
                   <Input
                     placeholder="N/N"
@@ -782,16 +886,107 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 <p className="text-sm font-medium" data-testid="text-gcf">{displayData.gcf}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Svy Offset</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">Svy Offset</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-svy-offset-info" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs max-w-xs">
+                      <p className="font-semibold mb-1">SelectedBHA</p>
+                      <p className="text-xs mb-2">/well/drillString/getBha</p>
+                      <p className="text-xs mb-1">wellName | bhaNum</p>
+                      <p className="text-xs">Match Type: MWD/LWD</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <p className="text-sm font-medium" data-testid="text-svy-offset">{displayData.svyOffset}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Gam Offset</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">Gam Offset</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-gam-offset-info" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs max-w-xs">
+                      <p className="font-semibold mb-1">SelectedBHA</p>
+                      <p className="text-xs mb-2">/well/drillString/getBha</p>
+                      <p className="text-xs mb-1">wellName | bhaNum</p>
+                      <p className="text-xs">Match Type: MWD/LWD</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <p className="text-sm font-medium" data-testid="text-gam-offset">{displayData.gamOffset}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Stickup</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">Stickup</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-stickup-info" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs max-w-xs">
+                      <p className="font-semibold mb-1">SelectedBHA</p>
+                      <p className="text-xs mb-2">/well/drillString/getBha</p>
+                      <p className="text-xs mb-1">wellName | bhaNum</p>
+                      <p className="text-xs">Match Type: MWD/LWD</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <p className="text-sm font-medium" data-testid="text-stickup">{displayData.stickup}</p>
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">Retrievable</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-retrievable-info" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs max-w-xs">
+                      <p className="font-semibold mb-1">SelectedBHA</p>
+                      <p className="text-xs mb-2">/well/drillString/getBha</p>
+                      <p className="text-xs mb-1">wellName | bhaNum</p>
+                      <p className="text-xs">Match Type: MWD/LWD</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <p className="text-sm font-medium" data-testid="text-retrievable">{displayData.retrievable}</p>
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">Pin To Set Screw</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-pin-to-set-info" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs max-w-xs">
+                      <p className="font-semibold mb-1">SelectedBHA</p>
+                      <p className="text-xs mb-2">/well/drillString/getBha</p>
+                      <p className="text-xs mb-1">wellName | bhaNum</p>
+                      <p className="text-xs">Match Type: MWD/LWD</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <p className="text-sm font-medium" data-testid="text-pin-to-set">{displayData.pinToSetScrew}</p>
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">Probe Order</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-probe-order-info" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs max-w-xs">
+                      <p className="font-semibold mb-1">SelectedBHA</p>
+                      <p className="text-xs mb-2">/well/drillString/getBha</p>
+                      <p className="text-xs mb-1">wellName | bhaNum</p>
+                      <p className="text-xs mb-2">Match Type: MWD/LWD</p>
+                      <p className="text-xs text-yellow-300">Status: Not populating - pending</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <p className="text-sm font-medium" data-testid="text-probe-order">{displayData.probeOrder}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Pulser Version</p>
@@ -821,17 +1016,57 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
                 <p className="text-sm font-medium" data-testid="text-bha-desc">{displayData.bhaDescription}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Itemized BHA</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">Itemized BHA</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-itemized-bha-info" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs max-w-xs">
+                      <p className="font-semibold mb-1">SelectedBHA</p>
+                      <p className="text-xs mb-2">/well/drillString/getBha</p>
+                      <p className="text-xs mb-1">wellName | bhaNum</p>
+                      <p className="text-xs mb-2">Always sorted by sequence no</p>
+                      <p className="text-xs text-green-300">Confirmed: Yes</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <p className="text-sm font-medium" data-testid="text-itemized-bha">{displayData.itemizedBHA}</p>
               </div>
               {displayData.mwdMake && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-muted-foreground">MWD Make</p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs text-muted-foreground">MWD Make</p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-mwd-make-info" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs max-w-xs">
+                          <p className="font-semibold mb-1">SelectedBHA</p>
+                          <p className="text-xs mb-2">/well/drillString/getBha</p>
+                          <p className="text-xs mb-1">wellName | bhaNum</p>
+                          <p className="text-xs">Match Type: MWD/LWD</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <p className="text-sm font-medium" data-testid="text-mwd-make">{displayData.mwdMake}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">MWD Model</p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs text-muted-foreground">MWD Model</p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-mwd-model-info" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs max-w-xs">
+                          <p className="font-semibold mb-1">SelectedBHA</p>
+                          <p className="text-xs mb-2">/well/drillString/getBha</p>
+                          <p className="text-xs mb-1">wellName | bhaNum</p>
+                          <p className="text-xs">Match Type: MWD/LWD</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <p className="text-sm font-medium" data-testid="text-mwd-model">{displayData.mwdModel}</p>
                   </div>
                 </div>
