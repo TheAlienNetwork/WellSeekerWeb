@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import WellListTable, { type Well } from "@/components/WellListTable";
-import { RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { RefreshCw, ChevronLeft, ChevronRight, Search, Database, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -133,12 +134,27 @@ export default function WellsPage({ onSelectWell }: WellsPageProps) {
   // Render the well list table
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Wells</h1>
-          <p className="text-sm text-muted-foreground">
-            {pagination ? `Showing ${wells.length} of ${pagination.total} wells` : 'Select a well to view detailed information'}
-          </p>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-3">
+          <Database className="w-8 h-8 text-primary" />
+          <div>
+            <h1 className="text-2xl font-semibold">Wells</h1>
+            <p className="text-sm text-muted-foreground">
+              {pagination ? (
+                <span className="flex items-center gap-2">
+                  Showing {wells.length} of {pagination.total} wells
+                  {debouncedSearch && (
+                    <Badge variant="info" className="text-xs">
+                      <Filter className="w-3 h-3 mr-1" />
+                      Filtered
+                    </Badge>
+                  )}
+                </span>
+              ) : (
+                'Select a well to view detailed information'
+              )}
+            </p>
+          </div>
         </div>
         <Button onClick={handleRefresh} variant="outline" data-testid="button-refresh-wells">
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -146,13 +162,17 @@ export default function WellsPage({ onSelectWell }: WellsPageProps) {
         </Button>
       </div>
       
-      <div className="flex gap-2">
-        <Input
-          placeholder="Search wells by name, job number, operator, or rig..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-md"
-        />
+      <div className="flex gap-2 relative">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search wells by name, job number, operator, or rig..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+            data-testid="input-search-wells"
+          />
+        </div>
       </div>
 
       <WellListTable

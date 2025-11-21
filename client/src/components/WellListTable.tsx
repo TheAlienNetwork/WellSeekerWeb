@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Search, Drill, Building2, Wrench } from "lucide-react";
 
 export interface Well {
   id: string;
@@ -32,8 +32,12 @@ export default function WellListTable({ wells, onSelectWell, selectedWellId }: W
     );
   });
 
-  const getStatusVariant = (status: string): "default" | "secondary" | "outline" => {
-    if (status === "EOW Sent") return "default";
+  const getStatusVariant = (status: string): "default" | "secondary" | "outline" | "success" | "warning" | "info" | "destructive" => {
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes("eow sent") || statusLower.includes("complete")) return "success";
+    if (statusLower.includes("drilling") || statusLower.includes("active") || statusLower.includes("in progress")) return "info";
+    if (statusLower.includes("pending") || statusLower.includes("waiting")) return "warning";
+    if (statusLower.includes("failed") || statusLower.includes("error") || statusLower.includes("problem")) return "destructive";
     return "secondary";
   };
 
@@ -73,10 +77,20 @@ export default function WellListTable({ wells, onSelectWell, selectedWellId }: W
                     {well.wellStatus}
                   </Badge>
                 </TableCell>
-                <TableCell className="font-mono text-sm" data-testid={`text-jobnum-${well.id}`}>{well.jobNum}</TableCell>
-                <TableCell data-testid={`text-wellname-${well.id}`}>{well.actualWell}</TableCell>
-                <TableCell data-testid={`text-rig-${well.id}`}>{well.rig}</TableCell>
-                <TableCell data-testid={`text-operator-${well.id}`}>{well.operator}</TableCell>
+                <TableCell className="font-mono text-sm font-semibold" data-testid={`text-jobnum-${well.id}`}>{well.jobNum}</TableCell>
+                <TableCell className="font-medium" data-testid={`text-wellname-${well.id}`}>{well.actualWell}</TableCell>
+                <TableCell data-testid={`text-rig-${well.id}`}>
+                  <div className="flex items-center gap-1.5">
+                    <Drill className="w-3.5 h-3.5 text-muted-foreground" />
+                    {well.rig}
+                  </div>
+                </TableCell>
+                <TableCell data-testid={`text-operator-${well.id}`}>
+                  <div className="flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                    {well.operator}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
