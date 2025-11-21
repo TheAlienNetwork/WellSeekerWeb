@@ -58,40 +58,43 @@ shared/
   schema.ts         # TypeScript types and API interfaces
 ```
 
-## Recent Changes (Latest Session)
-- **Enhanced Visual Design System**:
-  - Added vibrant color scheme with success (green), warning (amber), info (cyan), and destructive (red) variants
-  - Extended Badge component to support new color variants (success, warning, info)
-  - Added comprehensive icon integration using lucide-react throughout the application
-  
-- **Dashboard Page Enhancements**:
-  - Added colorful icons to all data cards (MapPin, Drill, Clock, Users, Gauge, Calendar, etc.)
-  - Implemented color-coded status badges with CheckCircle2/XCircle icons
-  - Enhanced visual hierarchy with better spacing and typography
-  - Improved loading states and error handling
-  
-- **Wells Page Improvements**:
-  - Added database icon to page header for better visual identity
-  - Enhanced search input with search icon
-  - Implemented dynamic filtered badge indicator showing search results count
-  - Added icons to Rig (Drill) and Operator (Building2) columns in table
-  - Improved status badge logic with color-coded variants based on well status
-  - Made job numbers bold and well names medium weight for better scanability
-  
-- **Data Flow Verification**:
-  - Confirmed well selection flow works correctly: WellsPage → App.tsx → Dashboard
-  - Dashboard properly receives selectedWell prop and displays data based on wellId from URL or prop
-  - All components properly integrated with TanStack Query for data fetching
+## API Field Mapping (Certified Mapping Document)
 
-## Next Steps
-1. Configure actual Well Seeker Pro API endpoints (once documentation is available)
-2. Add proper endpoint mapping for wells, BHA, drilling parameters
-3. Implement dynamic BHA run list fetching
-4. Add report generation functionality
-5. Implement real-time data refresh capabilities
+### Well Dashboard Data Field Sources
+
+**WS_Wells** (`/wells` endpoint - wellName parameter):
+- Operator, Rig, Well, Job #, Wellbore, county, state, latitude, longitude, Push Time Stamp
+
+**SelectedBHA** (`/well/drillString/getBha` endpoint - wellName | bhaNum parameters):
+- Plug In, Unplug, PW, Probe Order, Itemized BHA, MWD Make, MWD Model
+- UBHO SN, Helix SN, Helix Type, Pulser SN, Gamma SN, Directional SN, Battery SN (1, 2, 3), Shock Tool SN
+- Svy Offset, Gam Offset, Stickup, Retrievable, Pin To Set Screw, GCF
+- MWD Coordinator, Directional Coordinator, Pulser Version
+
+**MySection** (`/well/drillString/getBhaHeaders` endpoint - wellName parameter):
+- MWD #, BHA#, Section, Time In, Time Out, Depth In, Depth Out
+
+**GetWellRunInfo** (`/well/wellInfo/getWellInfo`, `/well/motorReport`, `/well/actualWellData` endpoints):
+- North Ref, VS, Grid Conv, Motor Fail, MWD Fail, POOH, MWD Comments
+- SSQ, TFSQ, Crossover, DAO, Surface System Version, LIH, # Stalls, NPT
+- MWD Min Temp, MWD Max Temp, DD Lead, MWD Lead, Plan Name
+
+**Mags** (`/well/getMagnetics` endpoint - wellName parameter):
+- Declination, MagField (bTotal), Dip, Mag Model, Mag Date
+
+**Drilling Operations** (from BHA Headers):
+- Circ Hrs, Drilling Hrs, BRT Hrs
+
+## Recent Changes (Latest Session)
+- ✅ **Fixed Critical Well Lookup** - Resolved well ID matching issue for formatted IDs (job-XXXX-XXXX format)
+- ✅ **MWD Survey Station Integration** - Complete survey data table with `/survey/getSurveys` API
+- ✅ **Updated Probe Order Endpoint** - Added `/api/update-probe-order` for MWD probe order updates
+- ✅ **Vibrant Cyan Styling** - 185° 100% 50% color scheme with glassmorphism effects throughout
+- ✅ **Accurate Field Mapping** - All dashboard fields mapped to correct Well Seeker Pro API endpoints
 
 ## User Preferences
 - Professional, data-dense interface similar to Excel application
+- Vibrant cyan tech aesthetic (185° 100% 50%) with glassmorphism
 - IBM Plex Sans font family for enterprise feel
-- Clean, minimal design focused on data display efficiency
 - Monospace fonts for technical data (IDs, coordinates, measurements)
+- Clean, minimal design focused on data display efficiency

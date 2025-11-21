@@ -1,0 +1,284 @@
+Operator	Chesapeake Appalachia, L.L.C.	WS_Wells	{{host}}/wells	wellName
+Rig	Patterson 572	WS_Wells	{{host}}/wells	wellName
+Well	Manahan 104HC	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Job #	MSPA-84035	WS_Wells	{{host}}/wells	NA
+Wellbore	Manahan 104HC - Wellbore 1	WS_Wells	{{host}}/wells	NA
+MWD #	1	MySection	{{host}}/well/drillString/getBhaHeaders	wellName
+BHA#	1	MySection	{{host}}/well/drillString/getBhaHeaders	wellName
+Section	SUR	MySection	{{host}}/well/drillString/getBhaHeaders	wellName
+county	Bradford	WS_Wells	{{host}}/wells	NA
+state	Pennsylvania	WS_Wells	{{host}}/wells	NA
+lat	41.60273518	WS_Wells	{{host}}/wells	NA
+long	-76.47159558	WS_Wells	{{host}}/wells	NA
+North Ref	GRID	GetWellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+VS	162.56	GetWellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+Grid Conv	0.846	GetWellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+Declination	-11.958	Mags	{{host}}/well/getMagnetics	wellName
+MagField	52261.5	Mags	{{host}}/well/getMagnetics	wellName
+Dip	67.098	Mags	{{host}}/well/getMagnetics	wellName
+Mag Model	User defined	Mags	{{host}}/well/getMagnetics	wellName
+Mag Date	2021-06-16	Mags	{{host}}/well/getMagnetics	wellName
+Plug In	6/12/21 7:00	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Unplug	6/13/21 12:00	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Time In	6/12/21 15:45	SelectedWell	{{host}}/well/drillString/getBhaHeaders	wellName
+Time Out	6/13/21 6:30	SelectedWell	{{host}}/well/drillString/getBhaHeaders	wellName
+Depth In	125	SelectedWell	{{host}}/well/drillString/getBhaHeaders	wellName
+Depth Out	856	SelectedWell	{{host}}/well/drillString/getBhaHeaders	wellName
+Circ Hrs	0.5	SelectedWell	{{host}}/well/drillString/getBhaHeaders	wellName
+Drilling Hrs	10.83333	SelectedWell	{{host}}/well/drillString/getBhaHeaders	wellName
+BRT Hrs	14.75	SelectedWell	{{host}}/well/drillString/getBhaHeaders	wellName
+Motor Fail	FALSE	GetWellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+MWD Fail	FALSE	GetWellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+POOH	Section TD	GetWellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+MWD Comments		GetWellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+PW	0.000000	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+SSQ		GetWellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+TFSQ		WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+Crossover	0	WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+GCF	0	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+DAO	113.56	WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+Surface System Version		WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+Svy Offset	61	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Gam Offset	0	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Stickup		SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Retrievable	No	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Pin To Set Screw (WSX fix)	1.1	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Probe Order	[List]	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Itemized BHA	See BHA tab	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+MWD Make	MPower MWD	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+MWD Model	XEM	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+UBHO SN	GSDR0343	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Helix SN	266	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Helix Type		SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Pulser SN	422	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Gamma SN		SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Directional SN	1076	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Battery SN	1527	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Battery SN	1843	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Shock Tool SN		SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+LIH	FALSE	WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+# Stalls	0	WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+NPT	0	WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+MWD Coordinator		SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Directional Coordinator	Rusty Stuart	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+DD Lead	Josh Corbit	WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+MWD Lead	Justin Galioto	WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+Push Time Stamp	No Recent Push	WS_Wells	{{host}}/wells	NA
+Plan Name	Manahan 104HC - Design 9 - Wellbore 1	WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)
+{{host}}/plannedWell/getPlannedWells"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName
+wellName
+{{parentWellName}}"
+MWD Day	Justin Galioto	WellRunInfo		
+MWD Night	Joseph Denaro	WellRunInfo		
+BHA Description	BHA 1			
+API Number	37-015-23682			
+Pulser Version		SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+MWD Min Temp	83	WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+MWD Max Temp	83	WellRunInfo	"{{host}}/well/wellInfo/getWellInfo
+{{host}}/well/motorReport
+    -{{host}}/well/motorReport (mwdData)
+{{host}}/well/actualWellData
+    -{{host}}/well/actualWellData (verticalSection)
+    -{{host}}/well/actualWellData (depthReference)"	"wellName
+wellName | bhaNum
+wellName | bhaNum
+wellName
+wellName
+wellName"
+Corr. Shock Tool SN		Formula		
+Total Circulating Hours	11.33	Formula		
+Mud Type	#REF!	MudInfo		
+Mud Weight	#REF!	MudInfo		
+Correcting MDG	1076			
+Battery 3	1578	SelectedBHA	{{host}}/well/drillString/getBha	wellName | bhaNum
+Babelfish SN				
