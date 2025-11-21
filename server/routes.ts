@@ -533,6 +533,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: `BHA run ${bhaNumber} not found for well ${wellName}` });
       }
 
+      // Fetch getBha data for component details
+      let bhaDetails: any = {};
+      try {
+        const bhaResponse = await fetch("https://www.icpwebportal.com/api/well/drillString/getBha", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            userName: req.session.userEmail || '',
+            wellName: wellName,
+            bhaNum: String(bhaNumber),
+            productKey: productKey
+          }).toString(),
+        });
+
+        if (bhaResponse.ok) {
+          const bhaData = await bhaResponse.json();
+          bhaDetails = Array.isArray(bhaData) ? bhaData[0] || {} : bhaData;
+        }
+      } catch (err) {
+        console.warn("Failed to fetch BHA details, continuing with available data");
+      }
+
+      // Fetch getMagnetics data for magnetic field information
+      let magData: any = {};
+      try {
+        const magsResponse = await fetch("https://www.icpwebportal.com/api/well/getMagnetics", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            userName: req.session.userEmail || '',
+            wellName: wellName,
+            productKey: productKey
+          }).toString(),
+        });
+
+        if (magsResponse.ok) {
+          const magsData = await magsResponse.json();
+          // Get most recent active magnetic data
+          magData = Array.isArray(magsData) 
+            ? magsData.sort((a, b) => new Date(b.magDate || 0).getTime() - new Date(a.magDate || 0).getTime()).find((m: any) => m.isActive !== false) || {}
+            : magsData;
+        }
+      } catch (err) {
+        console.warn("Failed to fetch magnetic data, continuing with available data");
+      }
+
       // Safe numeric conversion with fallback
       const safeNumber = (val: any, defaultVal: number = 0): number => {
         const parsed = parseFloat(val);
@@ -544,7 +596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return isNaN(parsed) ? defaultVal : parsed;
       };
 
-      // Transform to WellDashboardData format using BHA header data
+      // Transform to WellDashboardData format using data from all endpoints
       const wellData: any = {
         wellId: String(wellId),
         runId: String(runId),
@@ -556,18 +608,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mwdNumber: safeInt(bhaHeader.mwd || bhaHeader.mwdNum),
         bhaNumber: safeInt(bhaHeader.bhaNum || bhaHeader.bha || bhaNumber),
         section: bhaHeader.section || wellInfo.section || 'N/A',
-        county: wellInfo.county || '',
-        state: wellInfo.state || '',
+        county: wellInfo.county || selectedWell.county || '',
+        state: wellInfo.state || selectedWell.state || '',
         lat: safeNumber(wellInfo.lat || selectedWell.lat),
-        long: safeNumber(wellInfo.lon || wellInfo.long || selectedWell.lon),
+        long: safeNumber(wellInfo.lon || wellInfo.long || selectedWell.lon || selectedWell.long),
         northRef: (wellInfo.northRef !== false),
         vs: safeNumber(wellInfo.vs || bhaHeader.vs),
         gridConv: safeNumber(wellInfo.gridConv || bhaHeader.gridConv),
-        declination: safeNumber(wellInfo.dec || wellInfo.declination || bhaHeader.declination),
-        magField: safeNumber(wellInfo.bTotal || wellInfo.magField || bhaHeader.magField),
-        dip: safeNumber(wellInfo.dip || bhaHeader.dip),
-        magModel: wellInfo.magModel || bhaHeader.magModel || 'User defined',
-        magDate: wellInfo.magDate || bhaHeader.magDate || new Date().toISOString().split('T')[0],
+        declination: safeNumber(magData.declination || wellInfo.dec || wellInfo.declination || bhaHeader.declination),
+        magField: safeNumber(magData.bTotal || magData.magField || wellInfo.bTotal || wellInfo.magField || bhaHeader.magField),
+        dip: safeNumber(magData.dip || wellInfo.dip || bhaHeader.dip),
+        magModel: magData.magModel || wellInfo.magModel || bhaHeader.magModel || 'User defined',
+        magDate: magData.magDate || wellInfo.magDate || bhaHeader.magDate || new Date().toISOString().split('T')[0],
         plugIn: bhaHeader.plugIn || null,
         unplug: bhaHeader.unplug || null,
         timeIn: bhaHeader.timeIn || null,
@@ -597,15 +649,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         itemizedBHA: bhaHeader.itemizedBHA || 'See BHA tab',
         mwdMake: bhaHeader.mwdMake || '',
         mwdModel: bhaHeader.mwdModel || '',
-        ubhoSN: String(bhaHeader.ubhoSN || bhaHeader.ubhoSn || ''),
-        helixSN: String(bhaHeader.helixSN || bhaHeader.helixSn || ''),
-        helixType: String(bhaHeader.helixType || ''),
-        pulserSN: String(bhaHeader.pulserSN || bhaHeader.pulserSn || ''),
-        gammaSN: String(bhaHeader.gammaSN || bhaHeader.gammaSn || ''),
-        directionalSN: bhaHeader.directionalSN || bhaHeader.directionalSn || '',
-        batterySN: String(bhaHeader.batterySN || bhaHeader.batterySn || ''),
-        batterySN2: String(bhaHeader.batterySN2 || bhaHeader.batterySn2 || ''),
-        shockToolSN: String(bhaHeader.shockToolSN || bhaHeader.shockToolSn || ''),
+        ubhoSN: String(bhaDetails.ubhoSN || bhaDetails.ubhoSn || bhaHeader.ubhoSN || bhaHeader.ubhoSn || ''),
+        helixSN: String(bhaDetails.helixSN || bhaDetails.helixSn || bhaHeader.helixSN || bhaHeader.helixSn || ''),
+        helixType: String(bhaDetails.helixType || bhaHeader.helixType || ''),
+        pulserSN: String(bhaDetails.pulserSN || bhaDetails.pulserSn || bhaHeader.pulserSN || bhaHeader.pulserSn || ''),
+        gammaSN: String(bhaDetails.gammaSN || bhaDetails.gammaSn || bhaHeader.gammaSN || bhaHeader.gammaSn || ''),
+        directionalSN: bhaDetails.directionalSN || bhaDetails.directionalSn || bhaHeader.directionalSN || bhaHeader.directionalSn || '',
+        batterySN: String(bhaDetails.batterySN || bhaDetails.batterySn || bhaHeader.batterySN || bhaHeader.batterySn || ''),
+        batterySN2: String(bhaDetails.batterySN2 || bhaDetails.batterySn2 || bhaHeader.batterySN2 || bhaHeader.batterySn2 || ''),
+        shockToolSN: String(bhaDetails.shockToolSN || bhaDetails.shockToolSn || bhaHeader.shockToolSN || bhaHeader.shockToolSn || ''),
         lih: bhaHeader.lih === true,
         stalls: safeInt(bhaHeader.stalls),
         npt: safeNumber(bhaHeader.npt),
