@@ -161,18 +161,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const authData: any = await authResponse.json();
 
-      console.log("Authentication successful for:", email);
       console.log("Auth response data:", JSON.stringify(authData, null, 2));
       console.log("Available keys in authData:", Object.keys(authData));
+
+      // Check if the API returned an error (even with HTTP 200)
+      if (authData.error || authData.error_description) {
+        console.error("Authentication error from API:", authData.error, authData.error_description);
+        return res.status(401).json({ 
+          error: authData.error_description || "Invalid Well Seeker Pro credentials" 
+        });
+      }
 
       // Extract token - the API returns it as 'access_token'
       const token = authData.access_token;
       
-      if (!token) {
-        console.error("No access_token found in auth response! Keys:", Object.keys(authData));
+      if (!token || token === '') {
+        console.error("No valid access_token in auth response! Keys:", Object.keys(authData));
         console.error("Full auth response:", authData);
-        return res.status(500).json({ error: "Authentication succeeded but no token received from Well Seeker Pro API" });
+        return res.status(401).json({ error: "Authentication failed - no token received" });
       }
+
+      console.log("Authentication successful for:", email);
+      console.log("Token received, length:", token.length);
 
       console.log("Token received, length:", token.length);
 
