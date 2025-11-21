@@ -174,7 +174,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Stored new refresh token in session from login");
       }
 
-      res.json({ success: true, email });
+      // Explicitly save session before responding to ensure token is available for next request
+      req.session.save((err) => {
+        if (err) {
+          console.error("Error saving session:", err);
+          return res.status(500).json({ error: "Failed to save session" });
+        }
+        console.log("Session saved with token for:", email);
+        res.json({ success: true, email });
+      });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Login failed" });
@@ -223,7 +231,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Token refreshed successfully for:", userName);
 
-      res.json({ success: true });
+      // Explicitly save session before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error("Error saving session:", err);
+          return res.status(500).json({ error: "Failed to save session" });
+        }
+        res.json({ success: true });
+      });
     } catch (error) {
       console.error("Token refresh error:", error);
       res.status(500).json({ error: "Token refresh failed" });
