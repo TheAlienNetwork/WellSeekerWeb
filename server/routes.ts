@@ -161,10 +161,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const authData: any = await authResponse.json();
 
+      console.log("=== FULL AUTH RESPONSE ===");
+      console.log(JSON.stringify(authData, null, 2));
+      console.log("=== END AUTH RESPONSE ===");
       console.log("Auth response keys:", Object.keys(authData));
       console.log("Has access_token:", !!authData.access_token);
+      console.log("access_token value:", authData.access_token);
+      console.log("access_token type:", typeof authData.access_token);
+      console.log("access_token stringified:", JSON.stringify(authData.access_token));
       console.log("Has error:", !!authData.error);
       console.log("Token length:", authData.access_token?.length);
+      console.log("Token is empty string?:", authData.access_token === '');
+      console.log("Token is null?:", authData.access_token === null);
+      console.log("Token is undefined?:", authData.access_token === undefined);
 
       // Extract token - the API returns it as 'access_token'
       const token = authData.access_token;
