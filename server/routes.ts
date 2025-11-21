@@ -367,12 +367,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const wellsData = await wellsResponse.json();
+      
+      // Extract jobNum from wellId if it's in format "job-{jobNum}-{index}"
+      let wellIdToMatch = wellId;
+      let jobNumToMatch = '';
+      if (String(wellId).startsWith('job-')) {
+        const parts = String(wellId).split('-');
+        if (parts.length >= 3) {
+          // Format: job-XXXX-XXXX-XXXX-{index}
+          jobNumToMatch = parts.slice(1, parts.length - 1).join('-');
+        }
+      }
+      
       const selectedWell = Array.isArray(wellsData) 
-        ? wellsData.find(w => String(w.id) === wellId || String(w.jobNum) === wellId)
+        ? wellsData.find(w => {
+            const wId = String(w.id || '');
+            const wJobNum = String(w.jobNum || '');
+            const wActual = String(w.actualWell || '');
+            
+            return wId === wellIdToMatch || 
+                   wJobNum === wellIdToMatch || 
+                   wActual === wellIdToMatch ||
+                   (jobNumToMatch && (wJobNum === jobNumToMatch || wId.includes(jobNumToMatch)));
+          })
         : null;
 
       if (!selectedWell) {
-        console.log("Well not found");
+        console.log("Well not found - wellId:", wellId, "jobNum:", jobNumToMatch);
+        console.log("Available wells:", Array.isArray(wellsData) ? wellsData.slice(0, 3).map(w => ({ id: w.id, jobNum: w.jobNum, actualWell: w.actualWell })) : 'N/A');
         return res.status(404).json({ error: "Well not found" });
       }
 
@@ -464,8 +486,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const wellsData = await wellsResponse.json();
+      
+      // Extract jobNum from wellId if it's in format "job-{jobNum}-{index}"
+      let wellIdToMatch = String(wellId);
+      let jobNumToMatch = '';
+      if (wellIdToMatch.startsWith('job-')) {
+        const parts = wellIdToMatch.split('-');
+        if (parts.length >= 3) {
+          // Format: job-XXXX-XXXX-XXXX-{index}
+          jobNumToMatch = parts.slice(1, parts.length - 1).join('-');
+        }
+      }
+      
       const selectedWell = Array.isArray(wellsData) 
-        ? wellsData.find(w => String(w.id) === String(wellId) || String(w.jobNum) === String(wellId))
+        ? wellsData.find(w => {
+            const wId = String(w.id || '');
+            const wJobNum = String(w.jobNum || '');
+            const wActual = String(w.actualWell || '');
+            
+            return wId === wellIdToMatch || 
+                   wJobNum === wellIdToMatch || 
+                   wActual === wellIdToMatch ||
+                   (jobNumToMatch && (wJobNum === jobNumToMatch || wId.includes(jobNumToMatch)));
+          })
         : null;
 
       if (!selectedWell) {
