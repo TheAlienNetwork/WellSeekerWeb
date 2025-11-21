@@ -139,18 +139,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Authenticate with Well Seeker Pro API to get fresh tokens
       const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
 
-      console.log("Attempting to authenticate with Well Seeker Pro API for:", email);
+      console.log("Attempting to authenticate with Well Seeker Pro API");
+      console.log("  - userName:", email);
+      console.log("  - password length:", password.length);
+      console.log("  - password first char:", password.charAt(0));
+      console.log("  - productKey:", productKey);
+
+      const requestBody = new URLSearchParams({
+        userName: email,
+        password: password,
+        productKey: productKey
+      }).toString();
+      
+      console.log("Request body:", requestBody);
 
       const authResponse = await fetch("https://www.icpwebportal.com/api/authToken", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({
-          userName: email,
-          password: password,
-          productKey: productKey
-        }).toString(),
+        body: requestBody,
       });
 
       if (!authResponse.ok) {
