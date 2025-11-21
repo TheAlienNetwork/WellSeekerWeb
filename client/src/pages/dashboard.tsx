@@ -35,8 +35,14 @@ import {
   Thermometer,
   Wrench,
   Hash,
-  Settings
+  Settings,
+  Info
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -536,10 +542,48 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
               <CardTitle className="text-sm font-medium">Personnel</CardTitle>
               <Users className="w-4 h-4 text-primary" />
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-3">
               <div>
-                <p className="text-xs text-muted-foreground">DD Lead</p>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-muted-foreground">DD Lead</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-dd-lead-info" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs max-w-xs">
+                      <p className="font-semibold mb-2">WellRunInfo</p>
+                      <p className="text-xs">Sources:</p>
+                      <ul className="text-xs mt-1 space-y-1">
+                        <li>• /well/wellInfo/getWellInfo</li>
+                        <li>• /well/motorReport (mwdData)</li>
+                        <li>• /well/actualWellData (verticalSection)</li>
+                        <li>• /well/actualWellData (depthReference)</li>
+                      </ul>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <p className="text-sm font-medium" data-testid="text-dd-lead">{displayData.ddLead || "N/A"}</p>
+              </div>
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-muted-foreground">MWD Lead</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground cursor-help" data-testid="icon-mwd-lead-info" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs max-w-xs">
+                      <p className="font-semibold mb-2">WellRunInfo</p>
+                      <p className="text-xs">Sources:</p>
+                      <ul className="text-xs mt-1 space-y-1">
+                        <li>• /well/wellInfo/getWellInfo</li>
+                        <li>• /well/motorReport (mwdData)</li>
+                        <li>• /well/actualWellData (verticalSection)</li>
+                        <li>• /well/actualWellData (depthReference)</li>
+                      </ul>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <p className="text-sm font-medium" data-testid="text-mwd-lead">{displayData.mwdLead || "N/A"}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Directional Coordinator</p>
