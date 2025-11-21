@@ -377,6 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const wellName = selectedWell.actualWell;
+      console.log(`Fetching BHA headers for well: ${wellName} (ID: ${wellId})`);
 
       // Call getBhaHeaders to get all BHA runs
       const headersResponse = await fetch("https://www.icpwebportal.com/api/well/drillString/getBhaHeaders", {
@@ -398,19 +399,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const headersData = await headersResponse.json();
+      console.log(`BHA headers raw data:`, JSON.stringify(headersData).substring(0, 500));
+      
+      // Check if the response is an object with a data property or directly an array
+      const headers = Array.isArray(headersData) ? headersData : (headersData.data || []);
 
       // Transform headers to BHARun format
-      const bhaRuns: any[] = Array.isArray(headersData) 
-        ? headersData.map((header, index) => ({
-            id: `${wellId}-run-${header.bhaNum || header.bha || index}`,
-            runNumber: header.runNum || index + 1,
-            bhaNumber: header.bhaNum || header.bha || index + 1,
-            mwdNumber: header.mwd || header.mwdNum || 0,
-            wellId: wellId
-          }))
-        : [];
+      const bhaRuns: any[] = headers.map((header: any, index: number) => {
+        const bhaNum = header.bhaNum || header.bha || header.BhaNum || header.Bha || (index + 1);
+        const runNum = header.runNum || header.RunNum || (index + 1);
+        const mwdNum = header.mwd || header.mwdNum || header.Mwd || header.MwdNum || 0;
+        
+        return {
+          id: `${wellId}-run-${bhaNum}`,
+          runNumber: runNum,
+          bhaNumber: bhaNum,
+          mwdNumber: mwdNum,
+          wellId: wellId
+        };
+      });
 
-      console.log(`Fetched ${bhaRuns.length} BHA runs for well ${wellId}`);
+      console.log(`Fetched ${bhaRuns.length} BHA runs for well ${wellId}:`, bhaRuns.map(r => `Run ${r.runNumber}, BHA ${r.bhaNumber}`));
       res.json(bhaRuns);
     } catch (error) {
       console.error("Error fetching BHA runs:", error);

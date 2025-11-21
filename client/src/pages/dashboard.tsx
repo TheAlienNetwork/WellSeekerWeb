@@ -93,6 +93,11 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
       const defaultRunId = bhaRuns[0].id;
       setSelectedRunId(defaultRunId);
       setLocation(`/dashboard?wellId=${wellId}&runId=${defaultRunId}`);
+    } else if (bhaRuns && bhaRuns.length === 0 && !selectedRunId) {
+      // No runs found - create a default run ID
+      const defaultRunId = `${wellId}-run-1`;
+      setSelectedRunId(defaultRunId);
+      setLocation(`/dashboard?wellId=${wellId}&runId=${defaultRunId}`);
     }
   }, [bhaRuns, selectedRunId, wellId, setLocation]);
 
@@ -178,7 +183,17 @@ export default function Dashboard({ selectedWell }: DashboardProps) {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No well data available</p>
+          <p className="text-lg font-semibold mb-2">No well data available</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {bhaRuns && bhaRuns.length === 0 
+              ? "No BHA runs found for this well" 
+              : "Unable to load dashboard data"}
+          </p>
+          {bhaRuns && bhaRuns.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              This well may not have any BHA headers configured in Well Seeker Pro
+            </p>
+          )}
         </div>
       </div>
     );
