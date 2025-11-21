@@ -1,4 +1,4 @@
-# Well Seeker Pro Web Application - Design Guidelines
+# Peeker - Design Guidelines
 
 ## Design Approach
 **Design System:** Carbon Design System (IBM) - optimized for enterprise data-heavy applications with complex workflows and technical information density.

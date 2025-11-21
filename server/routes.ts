@@ -23,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Session middleware
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "wellseeker-dev-secret",
+      secret: process.env.SESSION_SECRET || "peeker-dev-secret",
       resave: false,
       saveUninitialized: false,
       cookie: {

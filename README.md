@@ -1,4 +1,4 @@
-# Well Seeker Pro Web Application
+# Peeker
 
 A modern web-based application for accessing and managing well data from the Well Seeker Pro (Innova Cloud Portal) API. This application provides a professional interface for viewing well information, BHA components, drilling parameters, and tool data.
 
@@ -31,12 +31,12 @@ A modern web-based application for accessing and managing well data from the Wel
 
 2. Configure environment variables:
    
-   Add your Well Seeker Pro credentials to the Replit Secrets:
+   Add your Well Seeker Pro API credentials to the Replit Secrets:
    - `WELLSEEKER_USERNAME` - Your Well Seeker Pro username
    - `WELLSEEKER_PASSWORD` - Your Well Seeker Pro password
    - `WELLSEEKER_PRODUCT_KEY` - Product key provided by Innova Drilling
 
-   The application will validate these credentials on login.
+   Peeker will validate these credentials on login.
 
 3. Start the development server:
    ```bash
@@ -54,11 +54,11 @@ The application will be available at `http://localhost:5000`
 
 ## Well Seeker Pro Integration
 
-The application authenticates with the Well Seeker Pro API and caches access tokens for efficient API usage. All API calls include automatic token refresh on expiration.
+Peeker authenticates with the Well Seeker Pro API and caches access tokens for efficient API usage. All API calls include automatic token refresh on expiration.
 
 ### API Endpoints Used
 
-The application connects to these Well Seeker Pro API endpoints:
+Peeker connects to these Well Seeker Pro API endpoints:
 - `POST /api/authToken` - Authentication
 - `GET /api/jobList` - List of wells/jobs
 - `GET /api/job/{jobNum}` - Well/job details

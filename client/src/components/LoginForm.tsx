@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,13 +34,13 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       const result = await api.auth.login(email, password);
       toast({
         title: "Login successful",
-        description: "Welcome to Well Seeker Pro",
+        description: "Welcome to Peeker",
       });
       onLogin(result.email);
     } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error.message || "Invalid Well Seeker Pro credentials. Please check your username and password.",
+        description: error.message || "Invalid Peeker credentials. Please check your username and password.",
         variant: "destructive",
       });
     } finally {
@@ -52,9 +51,11 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Well Seeker Pro</CardTitle>
-          <CardDescription>Sign in to access well data and drilling information</CardDescription>
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold">Welcome to Peeker</CardTitle>
+          <CardDescription>
+            Enter your credentials to access well data
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
