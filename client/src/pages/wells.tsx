@@ -48,22 +48,6 @@ export default function WellsPage({ onSelectWell }: WellsPageProps) {
       if (!response.ok) throw new Error("Failed to fetch wells");
       return response.json();
     },
-    onError: (err) => {
-      if (err.message.includes("invalid token") || err.message.includes("expired")) {
-        toast({
-          title: "Authentication Failed",
-          description: "Your session has expired. Please log in again.",
-          variant: "destructive",
-        });
-        // Optionally, redirect to login page or trigger a re-authentication flow here
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error loading wells",
-          description: err.message || "An unknown error occurred.",
-        });
-      }
-    },
   });
 
   const handleSelectWell = (well: Well) => {
@@ -94,8 +78,7 @@ export default function WellsPage({ onSelectWell }: WellsPageProps) {
       });
       // Clear selected well and potentially other state related to authentication
       setSelectedWellId(undefined);
-      onSelectWell({ id: "", name: "", location: "", status: "" }); // Reset selected well
-      // Invalidate queries to force re-fetch and trigger the onError handler for wells if not already handled
+      // Invalidate queries to force re-fetch
       queryClient.invalidateQueries({ queryKey: ["/api/wells"] });
     }
   };
