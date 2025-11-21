@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch, useLocation } from "wouter";
 import type { Well } from "@shared/schema";
@@ -15,7 +15,8 @@ import {
   Zap,
   Battery,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { ComponentReportData } from "@shared/schema";
@@ -49,8 +50,14 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
   const [generatingReport, setGeneratingReport] = useState<string | null>(null);
   const [selectedWellId, setSelectedWellId] = useState<string>(wellId || "");
   const [selectedRunId, setSelectedRunId] = useState<string>(runId || "run-1");
+  const [exportedComponents, setExportedComponents] = useState<Set<string>>(new Set());
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  // Reset exported components when run changes
+  useEffect(() => {
+    setExportedComponents(new Set());
+  }, [selectedRunId]);
 
   if (!wellId) {
     return (
@@ -161,6 +168,9 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
 
       // Download the file
       XLSX.writeFile(workbook, filename);
+
+      // Mark this component as exported for this run
+      setExportedComponents(prev => new Set([...prev, componentType]));
 
       toast({
         title: "Success",
@@ -283,23 +293,32 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {componentButtons.map((component) => {
                 const Icon = component.icon;
+                const isExported = exportedComponents.has(component.type);
                 return (
                   <Button
                     key={component.type}
                     onClick={() => generateExcel(component.type)}
                     variant="outline"
-                    className="h-auto py-4 flex flex-col items-center gap-2"
+                    className={`h-auto py-4 flex flex-col items-center gap-2 transition-colors ${
+                      isExported 
+                        ? "bg-success/10 border-success text-success hover:bg-success/20" 
+                        : ""
+                    }`}
                     disabled={!wellId || !runId || generatingReport !== null}
                     data-testid={`button-export-${component.type}`}
                   >
                     {generatingReport === component.type ? (
                       <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : isExported ? (
+                      <CheckCircle2 className="w-6 h-6" />
                     ) : (
                       <Icon className="w-6 h-6" />
                     )}
                     <span className="text-sm">{component.name}</span>
                     {generatingReport === component.type ? (
                       <span>Exporting...</span>
+                    ) : isExported ? (
+                      <span className="text-xs">Logged</span>
                     ) : (
                       <Download className="w-3 h-3 text-muted-foreground" />
                     )}
