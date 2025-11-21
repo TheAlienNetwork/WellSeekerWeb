@@ -163,12 +163,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Auth response keys:", Object.keys(authData));
       console.log("Has access_token:", !!authData.access_token);
+      console.log("Has error:", !!authData.error);
       console.log("Token length:", authData.access_token?.length);
 
       // Extract token - the API returns it as 'access_token'
       const token = authData.access_token;
 
-      // Check if we have a valid token (non-empty string)
+      // IMPORTANT: Prioritize valid token over error fields
+      // The API sometimes returns both error fields AND a valid token
+      // If we have a non-empty token, authentication succeeded regardless of error fields
       if (!token || token === '') {
         console.error("Authentication failed - no valid token received");
         console.error("Error from API:", authData.error, authData.error_description);
@@ -177,8 +180,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // We have a valid token - authentication succeeded
       console.log("Authentication successful for:", email);
       console.log("Token received, length:", token.length);
+      console.log("Note: Ignoring error fields since valid token was received");
 
       // Store credentials and tokens in session
       req.session.userId = email;
