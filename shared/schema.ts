@@ -73,18 +73,11 @@ export interface DrillingParameters {
   plugIn: string;
   timeIn: string;
   timeOut: string;
-  unplug: string;
   depthIn: string;
   depthOut: string;
-  totalFootage: string;
-  drillHours: string;
-  operHours: string;
-  circHrs: string;
-  pluggedHrs: string;
-  bha: number;
-  mwd: number;
-  retrievable: number;
-  reasonPOOH: string;
+  circulatingHours: string;
+  drillingHours: string;
+  brtHours: string;
 }
 
 export interface ToolComponent {
@@ -221,3 +214,26 @@ export interface ComponentExportRequest {
   runId: string;
   filePath?: string;
 }
+
+export interface MWDSurveyStation {
+  id: string;
+  wellId: string;
+  wellName: string;
+  latitude: number;
+  longitude: number;
+  altitudeMeters: number;
+  date: string;
+  model: string;
+  createdAt?: string;
+}
+
+export const surveyStationSchema = z.object({
+  wellName: z.string().min(1, "Well name is required"),
+  latitude: z.number().min(-90).max(90, "Latitude must be between -90 and 90"),
+  longitude: z.number().min(-180).max(180, "Longitude must be between -180 and 180"),
+  altitudeMeters: z.number().min(-500).max(10000, "Altitude must be between -500 and 10000"),
+  date: z.string().min(1, "Date is required"),
+  model: z.string().min(1, "Magnetic model is required"),
+});
+
+export type SurveyStationInput = z.infer<typeof surveyStationSchema>;

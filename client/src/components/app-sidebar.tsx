@@ -9,7 +9,7 @@ import {
   SidebarMenuItem,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Database, LayoutDashboard, Settings, LogOut, FileText, Gauge } from "lucide-react";
+import { Database, LayoutDashboard, Settings, LogOut, FileText, Gauge, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AppSidebarProps {
@@ -24,6 +24,7 @@ const menuItems = [
   { title: "Wells", icon: Database, page: "wells" },
   { title: "Well Details", icon: LayoutDashboard, page: "details" },
   { title: "Reports", icon: FileText, page: "reports" },
+  { title: "MWD Survey", icon: Compass, page: "mwd-survey" },
   { title: "Settings", icon: Settings, page: "settings" },
 ];
 

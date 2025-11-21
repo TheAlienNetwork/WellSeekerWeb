@@ -12,6 +12,7 @@ import WellsPage from "@/pages/wells";
 import WellDetailsPage from "@/pages/well-details";
 import Dashboard from "@/pages/dashboard";
 import ReportsPage from "@/pages/reports";
+import MWDSurveyStationPage from "@/pages/mwd-survey-station";
 import NotFound from "@/pages/not-found";
 import type { Well } from "@/components/WellListTable";
 import { api } from "@/lib/api";
@@ -122,6 +123,7 @@ function AppContent() {
     else if (page === "wells") setLocation("/wells");
     else if (page === "details") setLocation("/well-details");
     else if (page === "reports") setLocation("/reports");
+    else if (page === "mwd-survey") setLocation("/mwd-survey");
     else setLocation(`/${page}`);
   };
 
@@ -170,6 +172,9 @@ function AppContent() {
               </Route>
               <Route path="/reports">
                 <ReportsPage selectedWell={selectedWell} />
+              </Route>
+              <Route path="/mwd-survey">
+                <MWDSurveyStationPage selectedWell={selectedWell} />
               </Route>
               <Route path="/settings">
                 <div className="space-y-4 p-6">

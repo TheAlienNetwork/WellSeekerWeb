@@ -713,6 +713,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // MWD Survey Station POST endpoint
+  app.post("/api/survey-station", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { wellName, latitude, longitude, altitudeMeters, date, model } = req.body;
+
+      if (!wellName || latitude === undefined || longitude === undefined || !date || !model) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const token = await getWellSeekerToken(req);
+      const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
+
+      // Call calcMagnetics endpoint to calculate magnetic values for the survey station
+      const calcResponse = await fetch("https://www.icpwebportal.com/api/magnetics/calcMagnetics", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          lat: String(latitude),
+          long: String(longitude),
+          altitudeMeters: String(altitudeMeters),
+          date: date,
+          model: model,
+          productKey: productKey
+        }).toString(),
+      });
+
+      let calcData = {};
+      if (calcResponse.ok) {
+        calcData = await calcResponse.json();
+        console.log("Calculated magnetic data:", calcData);
+      } else {
+        console.warn("Failed to calculate magnetic data, continuing");
+      }
+
+      // Call addSurveyStation endpoint to store the survey station data
+      const addResponse = await fetch("https://www.icpwebportal.com/api/well/addSurveyStation", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          wellName: wellName,
+          lat: String(latitude),
+          long: String(longitude),
+          altitudeMeters: String(altitudeMeters),
+          date: date,
+          model: model,
+          productKey: productKey
+        }).toString(),
+      });
+
+      if (!addResponse.ok) {
+        const errorBody = await addResponse.text();
+        console.error("Failed to add survey station:", errorBody);
+        return res.status(500).json({ error: "Failed to add survey station to Well Seeker Pro" });
+      }
+
+      const result = await addResponse.json();
+
+      res.json({
+        success: true,
+        message: "Survey station added successfully",
+        data: {
+          wellName,
+          latitude,
+          longitude,
+          altitudeMeters,
+          date,
+          model,
+          calculatedMagnetics: calcData,
+          serverResponse: result,
+        },
+      });
+    } catch (error) {
+      console.error("Error adding survey station:", error);
+      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to add survey station" });
+    }
+  });
+
   // Component report data endpoint
   app.get("/api/component-report/:wellId/:runId/:componentType", async (req, res) => {
     try {
