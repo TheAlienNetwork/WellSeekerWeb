@@ -25,11 +25,30 @@ interface ReportsPageProps {
   selectedWell: Well | null;
 }
 
+interface BHARun {
+  id: string;
+  runNumber: number;
+  bhaNumber: number;
+  mwdNumber: number;
+}
+
+interface WellsResponse {
+  wells: Well[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export default function ReportsPage({ selectedWell }: ReportsPageProps) {
   const searchParams = new URLSearchParams(useSearch());
   const wellId = searchParams.get("wellId") || selectedWell?.id;
   const runId = searchParams.get("runId") || "run-1";
   const [generatingReport, setGeneratingReport] = useState<string | null>(null);
+  const [selectedWellId, setSelectedWellId] = useState<string>(wellId || "");
+  const [selectedRunId, setSelectedRunId] = useState<string>(runId || "run-1");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -47,9 +66,11 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
   }
 
   // Fetch wells list
-  const { data: wells } = useQuery<any[]>({
+  const { data: wellsResponse } = useQuery<WellsResponse>({
     queryKey: ["/api/wells"],
   });
+
+  const wells = wellsResponse?.wells || [];
 
   // Fetch BHA runs for selected well
   const { data: bhaRuns } = useQuery<BHARun[]>({
@@ -196,9 +217,9 @@ export default function ReportsPage({ selectedWell }: ReportsPageProps) {
                     <SelectValue placeholder="Select well" />
                   </SelectTrigger>
                   <SelectContent>
-                    {wells?.map((well: any) => (
+                    {wells.map((well: Well) => (
                       <SelectItem key={well.id} value={well.id} data-testid={`option-well-${well.id}`}>
-                        {well.well} - {well.operator}
+                        {well.actualWell} - {well.operator}
                       </SelectItem>
                     ))}
                   </SelectContent>
