@@ -585,9 +585,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
           magData = Array.isArray(magsData) 
             ? magsData.sort((a, b) => new Date(b.magDate || 0).getTime() - new Date(a.magDate || 0).getTime()).find((m: any) => m.isActive !== false) || {}
             : magsData;
+          console.log('Magnetic Data retrieved:', Object.keys(magData));
         }
       } catch (err) {
         console.warn("Failed to fetch magnetic data, continuing with available data");
+      }
+
+      // Fetch motorReport data for motor/MWD information
+      let motorData: any = {};
+      try {
+        const motorResponse = await fetch("https://www.icpwebportal.com/api/well/motorReport", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            userName: req.session.userEmail || '',
+            wellName: wellName,
+            bhaNum: String(bhaNumber),
+            productKey: productKey
+          }).toString(),
+        });
+
+        if (motorResponse.ok) {
+          const motorResponseData = await motorResponse.json();
+          motorData = Array.isArray(motorResponseData) ? motorResponseData[0] || {} : motorResponseData;
+          console.log('Motor/MWD Data retrieved:', Object.keys(motorData));
+        }
+      } catch (err) {
+        console.warn("Failed to fetch motor data, continuing with available data");
+      }
+
+      // Fetch actualWellData for well run information
+      let wellRunData: any = {};
+      try {
+        const wellDataResponse = await fetch("https://www.icpwebportal.com/api/well/actualWellData", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            userName: req.session.userEmail || '',
+            wellName: wellName,
+            bhaNum: String(bhaNumber),
+            productKey: productKey
+          }).toString(),
+        });
+
+        if (wellDataResponse.ok) {
+          const wellDataResponseData = await wellDataResponse.json();
+          wellRunData = Array.isArray(wellDataResponseData) ? wellDataResponseData[0] || {} : wellDataResponseData;
+          console.log('Well Run Data retrieved:', Object.keys(wellRunData));
+        }
+      } catch (err) {
+        console.warn("Failed to fetch well run data, continuing with available data");
       }
 
       // Safe numeric conversion with fallback
