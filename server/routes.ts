@@ -1625,6 +1625,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update MWD Probe Order endpoint
+  app.post("/api/update-probe-order", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { wellName, bhaNum, probeOrder } = req.body;
+
+      if (!wellName || !bhaNum || !probeOrder) {
+        return res.status(400).json({ error: "wellName, bhaNum, and probeOrder are required" });
+      }
+
+      const token = await getWellSeekerToken(req);
+      const productKey = "02c041de-9058-443e-ad5d-76475b3e7a74";
+
+      // Convert probeOrder array to JSON string for the API
+      const probeOrderJson = typeof probeOrder === 'string' ? probeOrder : JSON.stringify(probeOrder);
+
+      // Call updateMwdProbeOrder endpoint
+      const updateResponse = await fetch("https://www.icpwebportal.com/api/well/drillString/updateMwdProbeOrder", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          userName: req.session.userEmail || '',
+          productKey: productKey,
+          wellName: wellName,
+          bhaNum: String(bhaNum),
+          probeOrder: probeOrderJson
+        }).toString(),
+      });
+
+      if (!updateResponse.ok) {
+        const errorBody = await updateResponse.text();
+        console.error(`Failed to update probe order: ${updateResponse.status} - ${errorBody}`);
+        return res.status(500).json({ error: `Failed to update probe order: ${updateResponse.statusText}` });
+      }
+
+      const result = await updateResponse.json();
+      console.log(`Probe order updated successfully for well ${wellName}, BHA ${bhaNum}`);
+      
+      res.json({
+        success: true,
+        message: "Probe order updated successfully",
+        data: result
+      });
+    } catch (error) {
+      console.error("Error updating probe order:", error);
+      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to update probe order" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
